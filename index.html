@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="uk">
+  <head>
+    <meta charset="utf-8" />
+    <title>Lwallet Insights — Vanilla Prototype</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+    <link rel="stylesheet" href="./assets/styles.css" />
+  </head>
+  <body>
+    <header class="appbar">
+      <div class="brand">Lwallet Insights</div>
+      <nav class="nav">
+        <a href="#/page-1" class="nav-link">Огляд Ринку</a>
+        <a href="#/page-2" class="nav-link">Індекс Страху</a>
+        <a href="#/tg" class="nav-link">Телеграм</a>
+        <button type="button" class="nav-refresh-btn" data-action="refresh-data">
+          <span class="nav-refresh-btn__label">Оновити</span>
+          <span class="nav-refresh-btn__spinner" aria-hidden="true"></span>
+        </button>
+      </nav>
+
+      <div class="toolbar">
+        <button class="nav-toggle" type="button" aria-label="Відкрити меню" aria-expanded="false">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+        <div class="export-controls">
+          <button id="save-both" class="btn">Зберегти все</button>
+          <button id="save-btn" class="save-btn">Зберегти поточну</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="main-container">
+      <div id="canvas-wrapper">
+        <section id="screen-shot-area" class="canvas-1080x1920" aria-label="Полотно для експорту"></section>
+      </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" defer></script>
+    <script type="module" src="./app/app.js"></script>
+  </body>
+</html>

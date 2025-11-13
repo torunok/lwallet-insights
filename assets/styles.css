@@ -1,0 +1,2730 @@
+﻿:root {
+    --bg: #0e0f12;
+    --panel: #16181d;
+    --text: #e9edf1;
+    --muted: #a4adbb;
+    --accent-yellow: #ffd166;
+    --accent-blue: #4cc9f0;
+    --ok: #00c853;
+    --bad: #ff5252;
+    --radius: 16px;
+    --gap: 16px;
+    --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", "Apple Color Emoji", "Segoe UI Emoji";
+    --canvas-width: 1080px;
+    --canvas-height: 1920px;
+    --app-max-width: 1600px;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    height: 100%;
+}
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: clamp(14px, 1.05vw, 16px);
+}
+
+/* AppBar */
+.appbar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 16px;
+    background: rgba(14, 15, 18, 0.85);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid #1f232b;
+    width: 100%;
+    max-width: var(--app-max-width);
+    margin: 0 auto;
+}
+
+.brand {
+    font-weight: 700;
+    letter-spacing: .3px;
+}
+
+.nav {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.nav-toggle {
+    display: none;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: transparent;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px;
+}
+
+.nav-toggle span {
+    display: block;
+    width: 100%;
+    height: 2px;
+    background: #fff;
+    transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+.nav-toggle.is-open span:nth-child(1) {
+    transform: translateY(8px) rotate(45deg);
+}
+
+.nav-toggle.is-open span:nth-child(2) {
+    opacity: 0;
+}
+
+.nav-toggle.is-open span:nth-child(3) {
+    transform: translateY(-8px) rotate(-45deg);
+}
+
+.nav-refresh-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 999px;
+    padding: 2px 10px;
+    background: transparent;
+    color: #a4adbb;
+    font-size: 10px;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease, opacity 0.2s ease;
+}
+
+.nav-refresh-btn:is(:hover, :focus-visible) {
+    border-color: #ffd500;
+    color: #ffd500;
+}
+
+.nav-refresh-btn:disabled {
+    cursor: not-allowed;
+}
+
+.nav-refresh-btn__spinner {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #fff;
+    animation: nav-refresh-spin 0.8s linear infinite;
+    opacity: 100;
+}
+
+.nav-refresh-btn.is-loading {
+    opacity: 0.75;
+}
+
+.nav-refresh-btn.is-loading .nav-refresh-btn__spinner {
+    opacity: 1;
+}
+
+.nav-refresh-btn.is-success {
+    border-color: var(--ok);
+    color: var(--ok);
+}
+
+.nav-refresh-btn.is-error {
+    border-color: var(--bad);
+    color: var(--bad);
+}
+
+@keyframes nav-refresh-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.nav-link {
+    color: var(--muted);
+    text-decoration: none;
+    padding: 6px 10px;
+    border-radius: 10px;
+}
+
+.nav-link:hover {
+    background: #1b1f27;
+    color: var(--text);
+}
+
+.save-btn {
+    padding: 8px 14px;
+    border: 0;
+    border-radius: 12px;
+    background: #2a3140;
+    color: var(--text);
+    cursor: pointer;
+}
+
+.save-btn:hover {
+    background: #343c4f;
+}
+
+/* Контейнер з автоскейлом */
+.main-container {
+    height: calc(100vh - 60px);
+    display: grid;
+    place-items: center;
+    padding: 16px;
+}
+
+#canvas-wrapper {
+    transform-origin: top left;
+    margin: 0 auto;
+    width: var(--canvas-width);
+    height: var(--canvas-height);
+    /* scale виставляється JS */
+}
+
+/* Полотно 1080×1920 */
+.canvas-1080x1920 {
+    width: var(--canvas-width, 1080px);
+    height: var(--canvas-height, 1920px);
+    background:
+        linear-gradient(180deg, #0f1116 0%, #0f1116 55%),
+        linear-gradient(135deg, rgba(255, 209, 102, 0.08) 0%, transparent 40%),
+        linear-gradient(225deg, rgba(76, 201, 240, 0.08) 0%, transparent 40%);
+    overflow: hidden;
+    display: grid;
+    grid-template-rows: auto 1fr;
+}
+
+/* Хедер сторінки */
+.page-header {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: var(--gap);
+    padding: 24px;
+    background: linear-gradient(90deg, rgba(255, 209, 102, 0.08), rgba(76, 201, 240, 0.08));
+    border-bottom: 1px solid #1f232b;
+}
+
+.page-title {
+    font-size: 28px;
+    font-weight: 800;
+}
+
+.page-date {
+    color: var(--muted);
+}
+
+/* Контент сторінки 1 */
+.page1-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 0.9fr;
+    /* дві великі картки + вузька колонка */
+    gap: var(--gap);
+    padding: 24px;
+}
+
+.card {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0.00) 100%), var(--panel);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 18px;
+}
+
+.card h3,
+.page-title {
+    letter-spacing: .2px;
+}
+
+.card .value {
+    font-size: 40px;
+    font-weight: 800;
+}
+
+.section-accent {
+    font-weight: 800;
+    color: #ffd166;
+    text-transform: uppercase;
+}
+
+.stat-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.stat {
+    background: #1a1f29;
+    padding: 10px;
+    font-size: 12px;
+    color: white;
+}
+
+.stat strong {
+    color: var(--text);
+}
+
+.divider {
+    height: 1px;
+    background: #1f232b;
+    margin: 6px 0 12px;
+}
+
+/* Дрібні утиліти */
+.bad {
+    color: var(--bad);
+}
+
+.ok {
+    color: var(--ok);
+}
+
+.center {
+    text-align: center;
+}
+
+/* Freeze-стилі для стабільного захоплення html2canvas */
+body.freeze,
+body.capturing {
+
+    /* вимикаємо анімації/переходи під час захоплення */
+    * {
+        animation: none !important;
+        transition: none !important;
+    }
+}
+
+/* тимчасово вимикаємо backdrop-фільтр у шапці на час захоплення */
+body.capturing .appbar {
+    backdrop-filter: none !important;
+    background: #0e0f12 !important;
+}
+
+/* Сторінка 2 */
+.page2-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: var(--gap);
+    padding: 24px;
+}
+
+.list-card .item {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+    padding: 10px 0;
+    border-bottom: 1px dashed #242a37;
+}
+
+.list-card .item:last-child {
+    border-bottom: 0;
+}
+
+.item .ticker {
+    font-weight: 700;
+}
+
+.item .change.ok {
+    color: var(--ok);
+}
+
+.item .change.bad {
+    color: var(--bad);
+}
+
+/* Індикатор страху/жадібності */
+.gauge {
+    position: relative;
+    background: var(--panel);
+    border: 1px solid #232833;
+    border-radius: var(--radius);
+    padding: 16px;
+    height: 100%;
+}
+
+.gauge-canvas {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 0.6;
+    /* напівкруг */
+    display: grid;
+    place-items: center;
+    margin-top: 8px;
+}
+
+.gauge-dial {
+    position: relative;
+    width: 100%;
+    max-width: 480px;
+    aspect-ratio: 1 / 0.5;
+    border-radius: 480px 480px 0 0 / 240px 240px 0 0;
+    background: conic-gradient(from 180deg,
+            #ff6b6b 0deg 36deg,
+            #ffd166 36deg 108deg,
+            #4cc9f0 108deg 180deg);
+    mask: radial-gradient(100% 100% at 50% 100%, transparent 49%, #000 50%);
+    border: 10px solid #12151b;
+    border-bottom: 0;
+    overflow: hidden;
+}
+
+.gauge-needle {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 2px;
+    height: 52%;
+    background: #fff;
+    transform-origin: bottom center;
+    box-shadow: 0 0 6px rgba(255, 255, 255, 0.6);
+}
+
+.gauge-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.gauge-value {
+    font-size: 40px;
+    font-weight: 800;
+    text-align: center;
+    margin-top: 6px;
+}
+
+.stack {
+    display: grid;
+    gap: var(--gap);
+    align-content: start;
+}
+
+.metric {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 12px;
+    align-items: center;
+}
+
+.metric .ico {
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    background: #1a1f29;
+    border: 1px solid #222735;
+}
+
+.metric .meta h4 {
+    margin: 0;
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 600;
+}
+
+.metric .meta .val {
+    font-size: 22px;
+    font-weight: 800;
+}
+
+/* компактні секундарні значення */
+.subgrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.subgrid .chip {
+    background: #1a1f29;
+    border: 1px solid #222735;
+    border-radius: 12px;
+    padding: 8px 10px;
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.subgrid .chip strong {
+    color: var(--text);
+}
+
+/* Тулбар праворуч у хедері */
+.toolbar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.btn {
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: 1px solid #2b3240;
+    background: #1b202b;
+    color: var(--text);
+    cursor: pointer;
+}
+
+.btn:hover {
+    background: #232936;
+}
+
+.export-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+@media (max-width: 900px) {
+    .toolbar .export-controls {
+        gap: 6px;
+    }
+}
+
+@media (max-width: 768px) {
+    .appbar {
+        grid-template-columns: auto auto;
+        grid-template-rows: auto auto;
+        grid-template-areas:
+            "brand actions"
+            "nav nav";
+        gap: 8px 16px;
+    }
+
+    .brand {
+        grid-area: brand;
+    }
+
+    .toolbar {
+        grid-area: actions;
+    }
+
+    .nav {
+        grid-area: nav;
+        flex-direction: column;
+        align-items: flex-start;
+        width: 100%;
+        gap: 10px;
+        max-height: 0;
+        overflow: hidden;
+        padding-top: 0;
+        border-top: 0;
+        transition: max-height 0.25s ease;
+    }
+
+    .nav.is-open {
+        max-height: 340px;
+        padding-top: 12px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        margin-top: 4px;
+    }
+
+    .nav-toggle {
+        display: inline-flex;
+    }
+
+    .toolbar .export-controls {
+        display: none;
+    }
+}
+
+.select {
+    background: #1b202b;
+    color: var(--text);
+    border: 1px solid #2b3240;
+    border-radius: 10px;
+    padding: 6px 8px;
+}
+
+.checkbox {
+    font-size: 12px;
+    color: var(--muted);
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+/* Responsive layout */
+@media (max-width: 1280px) {
+    .appbar {
+        grid-template-columns: 1fr;
+        row-gap: 12px;
+    }
+
+    .nav {
+        flex-wrap: wrap;
+    }
+
+    .toolbar {
+        width: 100%;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+    }
+
+    .export-controls {
+        flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 960px) {
+    .main-container {
+        height: auto;
+        min-height: calc(100vh - 60px);
+        padding: 12px;
+    }
+
+    #canvas-wrapper {
+        transform-origin: top center;
+    }
+
+    .nav {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+
+    .export-controls {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .export-controls>* {
+        width: 100%;
+    }
+
+    .checkbox {
+        justify-content: flex-start;
+    }
+}
+
+@media (max-width: 640px) {
+    .appbar {
+        padding: 10px 12px;
+    }
+
+    .nav {
+        overflow-x: auto;
+        gap: 8px;
+        padding-bottom: 4px;
+    }
+
+    .nav-link {
+        flex: 0 0 auto;
+    }
+
+    .btn,
+    .save-btn {
+        width: 100%;
+    }
+
+    .export-controls select {
+        width: 100%;
+    }
+}
+
+/* Компактний блок популярних монет на сторінці 1 */
+.popular-compact {
+    display: grid;
+    gap: 8px;
+}
+
+.popular-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 8px;
+    background: #1a1f29;
+    border: 1px solid #222735;
+    border-radius: 12px;
+    padding: 8px 10px;
+    font-size: 13px;
+    align-items: center;
+}
+
+.popular-row .ticker {
+    font-weight: 700;
+}
+
+.popular-row .price {
+    color: var(--muted);
+}
+
+.popular-row .delta.ok {
+    color: var(--ok);
+    font-weight: 700;
+}
+
+.popular-row .delta.bad {
+    color: var(--bad);
+    font-weight: 700;
+}
+
+/* Світла тема */
+:root[data-theme="light"] {
+    --bg: #f6f7fb;
+    --panel: #ffffff;
+    --text: #0e0f12;
+    --muted: #596579;
+}
+
+:root[data-theme="light"] .appbar {
+    background: rgba(255, 255, 255, 0.85);
+    border-bottom-color: #e5e9f1;
+}
+
+:root[data-theme="light"] .save-btn,
+:root[data-theme="light"] .btn,
+:root[data-theme="light"] .select {
+    background: #eef1f6;
+    color: #0e0f12;
+    border-color: #d8dee8;
+}
+
+:root[data-theme="light"] .nav-link:hover {
+    background: #eef1f6;
+}
+
+:root[data-theme="light"] .card {
+    border-color: #e5e9f1;
+}
+
+:root[data-theme="light"] .popular-row {
+    background: #f4f6fb;
+    border-color: #e1e7f2;
+}
+
+.item,
+.popular-row {
+    align-items: center;
+}
+
+.item .avatar,
+.popular-row .avatar {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: #0f1218;
+    border: 1px solid #232833;
+    display: inline-grid;
+    place-items: center;
+    margin-right: 8px;
+}
+
+.item .avatar img,
+.popular-row .avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.value-text {
+    font-family: "Exo 2-Bold", Helvetica;
+    font-weight: 700;
+    color: #fff;
+    font-size: 34px;
+    letter-spacing: -.6px;
+}
+
+/* ====== Telegram post (4:3) ====== */
+.tg-post {
+    background: linear-gradient(180deg, #111118 0%, #0b0d12 100%);
+    width: 1350px;
+    height: 1080px;
+    color: #fff;
+    font-family: "Gilroy", "Exo 2", Helvetica, sans-serif;
+    padding: 48px 56px 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+.tg-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #ffffff1a;
+    padding-bottom: 12px;
+}
+
+.tg-eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-size: 18px;
+    color: #ffd500;
+    margin: 0 0 8px;
+}
+
+.tg-title {
+    font-size: 60px;
+    font-weight: 700;
+    letter-spacing: -1px;
+    margin: 0;
+}
+
+.tg-date {
+    font-size: 30px;
+    font-weight: 600;
+    padding: 10px 28px;
+    border-radius: 40px;
+    border: 1px solid #ffffff1a;
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.tg-layout {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 2fr 1.35fr;
+    gap: 28px;
+}
+
+.tg-left,
+.tg-right {
+    display: flex;
+    gap: 10px;
+}
+
+.tg-card {
+    background: rgba(34, 34, 42, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 28px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.tg-card-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #ffd500;
+    margin: 0;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+}
+
+.tg-assets {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.tg-asset-card {
+    gap: 16px;
+}
+
+.tg-asset-heading {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.tg-asset-price {
+    font-size: 42px;
+    margin: 4px 0 0;
+}
+
+.tg-asset-meta {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin: 0;
+}
+
+.tg-asset-meta dt {
+    font-size: 14px;
+    letter-spacing: 1px;
+    opacity: .6;
+    margin-bottom: 2px;
+}
+
+.tg-asset-meta dd {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.tg-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.tg-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: center;
+}
+
+.tg-row-name {
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.tg-row-ticker {
+    font-size: 16px;
+    opacity: .6;
+    letter-spacing: 1px;
+}
+
+.tg-row-stats {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 160px;
+}
+
+.tg-row-change {
+    font-size: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    font-weight: 600;
+}
+
+.tg-row-change.up {
+    color: #1ae6a2;
+}
+
+.tg-row-change.down {
+    color: #ff577f;
+}
+
+.tg-coin-info {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.tg-market-card .tg-metric {
+    font-size: 60px;
+    font-weight: 800;
+    margin: 0;
+}
+
+.tg-submetrics {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.tg-subtitle {
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: .6;
+}
+
+.fear-index {
+    --fear-scale: 1;
+    width: calc(790px * var(--fear-scale));
+    height: calc(395px * var(--fear-scale));
+    margin: 0 auto;
+}
+
+.fear-index__progress {
+    width: 790px;
+    height: 395px;
+    position: relative;
+    transform: scale(var(--fear-scale));
+    transform-origin: top center;
+}
+
+.progress-bar {
+    --rotate: 0deg;
+    position: relative;
+    height: 790px;
+    top: -145px;
+    pointer-events: none;
+}
+
+.progress-bar__value {
+    font-size: 152px;
+    font-weight: 700;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -5%);
+}
+
+.progress-bar__pointer {
+    /* Базове позиціонування та параметри для компактного гейджа (page-2). */
+    --fear-pointer-top: 153px;
+    --fear-pointer-border: 25px;
+    --fear-pointer-radius-offset: -360px;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    top: var(--fear-pointer-top);
+    transform: rotate(var(--rotate));
+}
+
+.progress-bar__pointer--tg {
+    /* Telegram отримує більший радіус та іншу висоту, щоб крапка лягала на ширший градієнт. */
+    --fear-pointer-top: 149px;
+    --fear-pointer-border: 26px;
+    --fear-pointer-radius-offset: -362px;
+}
+
+.progress-bar__pointer .pointer {
+    /* Товщина обводки задає локальний «мікро-радіус», translateX — реальну орбіту. */
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: var(--fear-pointer-border) solid #fff;
+    background: #e7e7e7;
+    box-shadow: 0 0 25px #0000004d;
+    transform: translateX(var(--fear-pointer-radius-offset));
+}
+
+.fear-index__progress .background {
+    width: 853px;
+    height: 432px;
+    border-top-left-radius: 810px;
+    border-top-right-radius: 810px;
+    border: 130px solid #ffffff;
+    border-bottom: 0;
+    opacity: 0.06;
+    position: absolute;
+    left: 50%;
+    bottom: 24px;
+    transform: translate(-50%, -50%);
+}
+
+.fear-index__progress .background__gradient {
+    width: 820px;
+    height: 410px;
+    background-image: url('./bg-gradient-DaIM1F0G.svg');
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-position: center;
+    position: absolute;
+    left: 50%;
+    bottom: 36px;
+    transform: translate(-50%, -50%);
+}
+
+.fear-index__progress .background__line {
+    width: 730px;
+    height: 410px;
+    background-image: url('./bg-line-Bf1YRFil.svg');
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-position: center;
+    position: absolute;
+    left: 50%;
+    bottom: 15px;
+    transform: translate(-50%, -50%);
+}
+
+.tg-empty {
+    opacity: .6;
+    font-style: italic;
+}
+
+/* Плашка дати праворуч у хедері сторінки */
+.page-date {
+    background: #2a2f3b;
+    border: 1px solid #3a4150;
+    padding: 6px 12px;
+    border-radius: 14px;
+    font-weight: 700;
+}
+
+/* Пресети полотен */
+:root[data-preset="story"] .canvas-1080x1920 {
+    width: 1080px;
+    height: 1920px;
+}
+
+:root[data-preset="tg43"] .canvas-1080x1920 {
+    width: 1350px;
+    height: 1080px;
+}
+
+:root[data-preset="tg11"] .canvas-1080x1920 {
+    width: 1080px;
+    height: 1080px;
+}
+
+/* ====== Figma skin: Сторінка 1 (instagram-story) ====== */
+.instagram-story {
+    background-color: #151517;
+    width: 100%;
+    min-width: 1080px;
+    min-height: 1920px;
+    display: flex;
+}
+
+.instagram-story .group {
+    margin-top: 184px;
+    width: 964px;
+    height: 1594px;
+    margin-left: 60px;
+    position: relative;
+}
+
+.instagram-story .frame {
+    display: flex;
+    flex-direction: column;
+    width: 475px;
+    align-items: flex-start;
+    gap: 18px;
+    padding: 24px 18px;
+    position: absolute;
+    top: 174px;
+    left: 0;
+    background-color: #cbbdda1a;
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid #ccbdda4c;
+}
+
+.instagram-story .div {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    position: relative;
+    align-self: stretch;
+    width: 100%;
+    flex: 0 0 auto;
+}
+
+.instagram-story .img {
+    position: relative;
+    width: 63.99px;
+    height: 64px;
+}
+
+.instagram-story .text-wrapper {
+    position: relative;
+    flex: 1;
+    font-family: "Gilroy-Bold", Helvetica;
+    font-weight: 700;
+    color: #ffd500;
+    font-size: 40px;
+    letter-spacing: .80px;
+    line-height: 50px;
+}
+
+.instagram-story .rectangle {
+    position: relative;
+    align-self: stretch;
+    width: 100%;
+    height: 1px;
+    background-color: #ffffff1a;
+}
+
+.instagram-story .frame-2 {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    position: relative;
+    align-self: stretch;
+    width: 100%;
+    flex: 0 0 auto;
+}
+
+.instagram-story .text-wrapper-2 {
+    position: relative;
+    align-self: stretch;
+    margin-top: -1px;
+    opacity: .6;
+    font-family: "Gilroy-Regular", Helvetica;
+    font-weight: 400;
+    color: #fff;
+    font-size: 34px;
+    letter-spacing: -.68px;
+}
+
+.instagram-story .text-wrapper-3 {
+    position: relative;
+    align-self: stretch;
+    font-family: "Gilroy-ExtraBold", Helvetica;
+    font-weight: 800;
+    color: #fff;
+    font-size: 48px;
+    letter-spacing: .96px;
+    line-height: 50px;
+}
+
+.instagram-story .text-wrapper-4 {
+    position: relative;
+    align-self: stretch;
+    font-family: "Gilroy", Helvetica;
+    font-weight: 600;
+    color: #fff;
+    font-size: 34px;
+    letter-spacing: -.68px;
+}
+
+.instagram-story .frame-3 {
+    display: flex;
+    flex-direction: column;
+    width: 475px;
+    align-items: flex-start;
+    gap: 18px;
+    padding: 24px 18px;
+    position: absolute;
+    top: 174px;
+    left: 485px;
+    background-color: #cbbdda1a;
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid #ccbdda4c;
+}
+
+.instagram-story .frame-4 {
+    display: flex;
+    flex-direction: column;
+    width: 960px;
+    align-items: flex-start;
+    gap: 18px;
+    padding: 24px 18px;
+    position: absolute;
+    top: 1179px;
+    left: 0;
+    background-color: #ccbdda1a;
+    border-radius: 24px;
+    border: 1px solid #ccbdda4c;
+}
+
+.instagram-story .div-wrapper {
+    display: flex;
+    height: 64px;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+    align-self: stretch;
+    width: 100%;
+}
+
+.instagram-story .text-wrapper-5 {
+    font-family: "Gilroy-Bold", Helvetica;
+    font-weight: 700;
+    color: #ffd500;
+    font-size: 40px;
+    letter-spacing: .80px;
+    line-height: 50px;
+    white-space: nowrap;
+    text-transform: uppercase;
+}
+
+.instagram-story .text-wrapper-6 {
+    font-family: "Gilroy-Black", Helvetica;
+    font-weight: 900;
+    color: #fff;
+    font-size: 108.2px;
+    letter-spacing: 2.16px;
+    line-height: 129.8px;
+}
+
+.instagram-story .frame-5 {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    align-self: stretch;
+}
+
+.instagram-story .frame-6 {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 24px;
+    flex: 1;
+    background-color: #ffffff0d;
+    border-radius: 16px;
+}
+
+.instagram-story .text-wrapper-7 {
+    opacity: .6;
+    font-family: "Gilroy-Regular", Helvetica;
+    font-weight: 400;
+    color: #fff;
+    font-size: 34px;
+}
+
+.instagram-story .frame-7 {
+    display: inline-flex;
+    align-items: center;
+    gap: 32px;
+}
+
+.instagram-story .frame-8 {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.instagram-story .up-down {
+    width: 24px;
+    height: 24px;
+}
+
+.instagram-story .text-wrapper-8 {
+    font-family: "Gilroy-Bold", Helvetica;
+    font-weight: 700;
+    color: #fff;
+    font-size: 34px;
+}
+
+.instagram-story .frame-9 {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
+}
+
+.instagram-story .frame-10 {
+    display: flex;
+    flex-direction: column;
+    width: 960px;
+    align-items: flex-start;
+    gap: 18px;
+    padding: 24px 18px;
+    position: absolute;
+    top: 646px;
+    left: 0;
+    background-color: #ccbdda1a;
+    border-radius: 24px;
+    border: 1px solid #ccbdda4c;
+}
+
+.instagram-story .frame-11 {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    align-self: stretch;
+}
+
+.instagram-story .frame-12 {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    align-self: stretch;
+}
+
+.instagram-story .frame-13 {
+    display: inline-flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.instagram-story .img-2 {
+    width: 56px;
+    height: 56px;
+}
+
+.instagram-story .text-wrapper-9 {
+    opacity: .5;
+    font-family: "Gilroy-Regular", Helvetica;
+    font-weight: 400;
+    color: #fff;
+    font-size: 34px;
+}
+
+.instagram-story .text-wrapper-10 {
+    position: absolute;
+    top: 76px;
+    left: calc(50% - 482px);
+    font-family: "Gilroy-Bold", Helvetica;
+    font-weight: 700;
+    color: #fff;
+    font-size: 72px;
+    text-align: center;
+    line-height: 70px;
+    white-space: nowrap;
+}
+
+.instagram-story .element-wrapper {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px 24px;
+    position: absolute;
+    top: 78px;
+    left: 556px;
+    background-color: #ccbdda1a;
+    border-radius: 60px;
+    border: 1px solid #ccbdda4c;
+}
+
+.instagram-story .element {
+    font-family: "Gilroy-Black", Helvetica;
+    font-weight: 900;
+    color: #fff;
+    font-size: 40px;
+    line-height: 40px;
+    white-space: nowrap;
+}
+
+.instagram-story .text-wrapper-11 {
+    position: absolute;
+    top: 74px;
+    left: calc(50% - 482px);
+    font-family: "Gilroy-Bold", Helvetica;
+    font-weight: 700;
+    color: #fff;
+    font-size: 72px;
+    text-align: center;
+    line-height: 70px;
+    white-space: nowrap;
+}
+
+/* ====== Figma skin: Сторінка 2 (stat) ====== */
+.stat {
+    background-color: #151517;
+    display: grid;
+    justify-items: center;
+    align-items: start;
+    width: 100%;
+    min-height: 100%;
+}
+
+.stat .group-wrapper {
+    background-color: #151517;
+    overflow: hidden;
+    width: 1080px;
+    height: 1920px;
+    display: flex;
+    padding: 0 60px;
+    align-items: flex-start;
+}
+
+.stat .group {
+    width: 960px;
+    height: 1924px;
+    margin-top: 167px;
+    display: flex;
+    flex-direction: column;
+    gap: 60px;
+}
+
+.stat .div {
+    min-height: 1000px;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+}
+
+.stat .frame {
+    display: inline-flex;
+    height: 64px;
+    width: 412px;
+    align-self: center;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px 24px;
+    background-color: #ccbdda1a;
+    border-radius: 60px;
+    border: 1px solid #ccbdda4c;
+}
+
+.stat .element {
+    font-family: "Gilroy-Black", Helvetica;
+    font-weight: 900;
+    color: #fff;
+    font-size: 40px;
+    line-height: 40px;
+    white-space: nowrap;
+}
+
+.stat .group-2 {
+    width: 960px;
+    height: 896px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.stat .frame-2 {
+    display: flex;
+    width: 960px;
+    min-height: 443px;
+    height: auto;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 24px;
+    padding: 32px;
+    background-color: #ccbdda1a;
+    border-radius: 24px;
+}
+
+.stat .frame-3 {
+    display: flex;
+    height: 64px;
+    align-items: center;
+    gap: 10px;
+    align-self: stretch;
+}
+
+.stat .text-wrapper {
+    flex: 1;
+    font-size: 40px;
+    line-height: 50px;
+    font-family: "Exo 2-Bold", Helvetica;
+    font-weight: 700;
+    color: #fff;
+}
+
+.stat .vector {
+    width: 61px;
+    height: 43px;
+}
+
+.stat .rectangle {
+    align-self: stretch;
+    height: 1px;
+    background-color: #ffffff1a;
+    border: none;
+}
+
+.stat .frame-4 {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    align-self: stretch;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.stat .frame-5 {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    align-self: stretch;
+}
+
+.stat .frame-6 {
+    display: inline-flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.stat .img {
+    width: 56px;
+    height: 56px;
+}
+
+.stat .frame-7 {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.stat .text-wrapper-2 {
+    font-family: "Gilroy-Bold", Helvetica;
+    font-weight: 700;
+    color: #fff;
+    font-size: 30px;
+    letter-spacing: -.6px;
+}
+
+.stat .text-wrapper-3 {
+    opacity: .5;
+    font-family: "Exo 2-Bold", Helvetica;
+    font-weight: 700;
+    color: #fff;
+    font-size: 30px;
+    letter-spacing: -.6px;
+}
+
+.stat .frame-8 {
+    display: inline-flex;
+    align-items: center;
+    gap: 32px;
+}
+
+.stat .div-wrapper {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
+}
+
+.stat .group-3 {
+    min-height: 864px;
+    display: flex;
+    flex-direction: column;
+}
+
+.stat .frame-9 {
+    display: flex;
+    width: 960px;
+    min-height: 64px;
+    align-items: center;
+    justify-content: space-around;
+}
+
+.stat .text-wrapper-4 {
+    flex: 1;
+    font-size: 56px;
+    text-align: center;
+    letter-spacing: -1.12px;
+    font-family: "Exo 2-Bold", Helvetica;
+    font-weight: 700;
+    color: #fff;
+}
+
+.stat .group-4 {
+    margin-left: 0;
+    width: 100%;
+    height: auto;
+    position: relative;
+    display: flex;
+    justify-content: center;
+}
+
+.stat .group-4 .fear-index {
+    --fear-scale: 0.85;
+    margin: 0 auto;
+}
+
+.stat .text-wrapper-5 {
+    position: absolute;
+    top: 209px;
+    left: 218px;
+    width: 264px;
+    font-family: "Exo 2-Black", Helvetica;
+    font-weight: 900;
+    color: #fff;
+    font-size: 160px;
+    text-align: center;
+    letter-spacing: 3.2px;
+    line-height: 170px;
+}
+
+.tg-copy {
+    width: 1080px;
+    height: 1920px;
+    transform-origin: top left;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.tg-copy-left {
+    transform: scale(0.6);
+}
+
+.tg-copy-right {
+    transform: scale(0.58);
+}
+
+@media (max-width: 1200px) {
+    .tg-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .tg-copy-left,
+    .tg-copy-right {
+        transform: scale(0.52);
+    }
+}
+
+@media (max-width: 900px) {
+
+    .tg-copy-left,
+    .tg-copy-right {
+        transform: scale(0.46);
+    }
+}
+
+@media (max-width: 640px) {
+
+    .tg-copy-left,
+    .tg-copy-right {
+        transform: scale(0.4);
+    }
+}
+
+/* Telegram landscape dashboard */
+#screen-shot-area[data-route="tg"] {
+    display: flex;
+    flex-direction: column;
+    width: var(--canvas-width, 1350px);
+    height: var(--canvas-height, 1080px);
+    padding: 24px 32px;
+    background: var(--background);
+    border-radius: var(--radius);
+    color: var(--text);
+    overflow: hidden;
+}
+
+#screen-shot-area[data-route="tg"] .tg-market {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+#screen-shot-area[data-route="tg"] .tg-market__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+#screen-shot-area[data-route="tg"] .tg-market__actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+#screen-shot-area[data-route="tg"] .tg-menu {
+    position: relative;
+}
+
+#screen-shot-area[data-route="tg"] .tg-menu__toggle {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    color: #fff;
+}
+
+#screen-shot-area[data-route="tg"] .tg-menu__toggle span {
+    width: 18px;
+    height: 2px;
+    border-radius: 999px;
+    background: currentColor;
+}
+
+#screen-shot-area[data-route="tg"] .tg-menu__panel {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 220px;
+    padding: 12px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(15, 15, 20, 0.95);
+    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.35);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-6px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 5;
+}
+
+#screen-shot-area[data-route="tg"] .tg-menu.is-open .tg-menu__panel {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
+#screen-shot-area[data-route="tg"] .tg-menu__item {
+    width: 100%;
+    border: none;
+    border-radius: 999px;
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    font-size: 14px;
+    text-align: left;
+    cursor: pointer;
+}
+
+#screen-shot-area[data-route="tg"] .tg-menu__item.is-active {
+    background: linear-gradient(135deg, #ff7a00, #ffd500);
+    color: #0b0b0f;
+}
+
+#screen-shot-area[data-route="tg"] .tg-market__eyebrow {
+    font-size: 14px;
+    letter-spacing: 0.24em;
+    color: var(--muted);
+    margin: 0 0 6px;
+}
+
+#screen-shot-area[data-route="tg"] .tg-market__title {
+    margin: 0;
+    font-size: 34px;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+}
+
+#screen-shot-area[data-route="tg"] .tg-market__date {
+    align-self: center;
+    font-size: 18px;
+    font-weight: 700;
+    padding: 8px 18px;
+    border-radius: 20px;
+    border: 3px solid #2a2f3b;
+    background: #1b1f25;
+}
+
+#screen-shot-area[data-route="tg"] .tg-market__grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) minmax(0, 1fr);
+    grid-template-rows: auto auto 1fr;
+    grid-template-areas:
+        "btc eth leaders"
+        "popular popular leaders"
+        "market market fear";
+    gap: 10px;
+}
+
+
+
+#screen-shot-area[data-route="tg"] .tg-grid-item {
+    height: 100%;
+}
+
+#screen-shot-area[data-route="tg"] .tg-card {
+    background: var(--panel);
+    border-radius: var(--radius);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 24px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+#screen-shot-area[data-route="tg"] .tg-card h3 {
+    margin: 0 0 12px;
+    font-size: 22px;
+    letter-spacing: 0.02em;
+    color: var(--accent-yellow);
+    text-transform: uppercase;
+}
+
+#screen-shot-area[data-route="tg"] .tg-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+#screen-shot-area[data-route="tg"] .tg-badge {
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text);
+}
+
+#screen-shot-area[data-route="tg"] .tg-coin-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+#screen-shot-area[data-route="tg"] .tg-coin-title img {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    object-fit: cover;
+    background: rgba(255, 255, 255, 0.04);
+}
+
+#screen-shot-area[data-route="tg"] .tg-coin-label {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+}
+
+#screen-shot-area[data-route="tg"] .tg-coin-subtitle {
+    margin: 4px 0 0;
+    font-size: 14px;
+    color: var(--muted);
+}
+
+#screen-shot-area[data-route="tg"] .tg-price {
+    font-size: 42px;
+    font-weight: 900;
+    margin: 16px 0 14px;
+}
+
+#screen-shot-area[data-route="tg"] .tg-meta {
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+#screen-shot-area[data-route="tg"] .tg-meta p {
+    margin: 4px 0;
+}
+
+#screen-shot-area[data-route="tg"] .tg-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+#screen-shot-area[data-route="tg"] .tg-list-title {
+    margin-top: 20px;
+}
+
+#screen-shot-area[data-route="tg"] .tg-list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
+    font-size: 16px;
+}
+
+#screen-shot-area[data-route="tg"] .tg-list-item:last-child {
+    border-bottom: none;
+}
+
+#screen-shot-area[data-route="tg"] .tg-list-item--empty {
+    justify-content: center;
+    color: var(--muted);
+}
+
+#screen-shot-area[data-route="tg"] .tg-list-name {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+#screen-shot-area[data-route="tg"] .tg-list-ticker {
+    font-weight: 700;
+    letter-spacing: 0.08em;
+}
+
+#screen-shot-area[data-route="tg"] .tg-list-subtitle {
+    color: var(--muted);
+    font-size: 13px;
+}
+
+#screen-shot-area[data-route="tg"] .tg-change {
+    font-weight: 700;
+    font-size: 16px;
+}
+
+#screen-shot-area[data-route="tg"] .tg-change.is-positive {
+    color: var(--ok);
+}
+
+#screen-shot-area[data-route="tg"] .tg-change.is-negative {
+    color: var(--bad);
+}
+
+#screen-shot-area[data-route="tg"] .tg-market-cap__value {
+    font-size: 56px;
+    font-weight: 900;
+    margin-bottom: 12px;
+}
+
+#screen-shot-area[data-route="tg"] .tg-fear,
+#screen-shot-area[data-route="page-2"] .tg-fear {
+    height: 100%;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+#screen-shot-area[data-route="tg"] .fear-index,
+#screen-shot-area[data-route="page-2"] .fear-index {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+#screen-shot-area[data-route="tg"] .fear-index {
+    --fear-scale: 0.5;
+    margin-top: -20px;
+}
+
+#screen-shot-area[data-route="page-2"] .fear-index {
+    --fear-scale: 0.85;
+}
+
+/* ==== VISUAL FIXES FOR pageCombined.js ==== */
+
+/* Темна палітра як у стор.1–2 */
+#screen-shot-area[data-route="tg"] {
+    background-color: #151517 !important;
+    color: #fff !important;
+    font-family: "Gilroy", "Exo 2", Helvetica, sans-serif;
+}
+
+/* Вигляд карток */
+#screen-shot-area[data-route="tg"] .tg-card {
+    background-color: rgba(203, 189, 218, 0.08) !important;
+    border: 1px solid rgba(204, 189, 218, 0.3) !important;
+    border-radius: 24px !important;
+    box-shadow: none !important;
+}
+
+/* Заголовки */
+#screen-shot-area[data-route="tg"] .tg-card h3 {
+    color: #ffd500 !important;
+    font-family: "Gilroy-Bold", Helvetica, sans-serif;
+    font-size: 28px;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+}
+
+/* Лінії між елементами */
+#screen-shot-area[data-route="tg"] .tg-list-item {
+    border-bottom: 1px solid #ffffff1a !important;
+    padding: 14px 0;
+}
+
+#screen-shot-area[data-route="tg"] .tg-list-item:last-child {
+    border-bottom: none !important;
+}
+
+/* Прибираємо крапочки */
+#screen-shot-area[data-route="tg"] .tg-list {
+    list-style: none !important;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Додаємо роздільну лінію під назвою монет */
+#screen-shot-area[data-route="tg"] .tg-rectangle {
+    width: 100%;
+    height: 1px;
+    background-color: #ffffff1a;
+    margin: 10px 0;
+}
+
+/* Тренд-трикутник */
+#screen-shot-area[data-route="tg"] .tg-trend {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+#screen-shot-area[data-route="tg"] .tg-trend svg {
+    width: 16px;
+    height: 10px;
+}
+
+
+
+
+/* === VISUAL ALIGN FIXES (pageCombined unified with page1/page2) === */
+
+#screen-shot-area[data-route="tg"] {
+    background-color: #151517 !important;
+    color: #fff !important;
+    font-family: "Gilroy", "Exo 2", Helvetica, sans-serif;
+}
+
+/* Тренд перед ціною */
+#screen-shot-area[data-route="tg"] .tg-list-prices {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+}
+
+#screen-shot-area[data-route="tg"] .tg-trend {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+#screen-shot-area[data-route="tg"] .trend-icon {
+    width: 16px;
+    height: 10px;
+    flex-shrink: 0;
+}
+
+/* Вирівнювання шрифтів */
+#screen-shot-area[data-route="tg"] .tg-list-ticker {
+    font-family: "Gilroy-Bold", Helvetica;
+    font-size: 26px;
+}
+
+#screen-shot-area[data-route="tg"] .tg-list-subtitle {
+    font-family: "Gilroy-Regular", Helvetica;
+    font-size: 20px;
+    opacity: 0.7;
+}
+
+/* Роздільна лінія */
+#screen-shot-area[data-route="tg"] .tg-rectangle {
+    width: 100%;
+    height: 1px;
+    background-color: #ffffff1a;
+    margin: 10px 0;
+}
+
+/* Відступи між елементами */
+#screen-shot-area[data-route="tg"] .tg-list-item {
+    gap: 8px;
+    padding: 10px 0;
+    border-bottom: 1px solid #ffffff1a !important;
+}
+
+#screen-shot-area[data-route="tg"] .tg-list-item:last-child {
+    border-bottom: none !important;
+}
+
+/* === VISUAL FIXES for unified Combined Page === */
+#screen-shot-area[data-route="tg"] {
+    background-color: #151517 !important;
+    font-family: "Gilroy", "Exo 2", Helvetica, sans-serif;
+    color: #fff !important;
+}
+
+/* Іконки монет */
+#screen-shot-area[data-route="tg"] .avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin-right: 16px;
+}
+
+#screen-shot-area[data-route="tg"] .avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Рядки монет */
+#screen-shot-area[data-route="tg"] .tg-list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    border-bottom: 1px solid #ffffff1a;
+    padding: 10px 0;
+}
+
+#screen-shot-area[data-route="tg"] .tg-left {
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+#screen-shot-area[data-route="tg"] .tg-names {
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+    gap: 4px;
+}
+
+#screen-shot-area[data-route="tg"] .tg-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+#screen-shot-area[data-route="tg"] .trend-icon {
+    width: 18px;
+    height: 12px;
+    flex-shrink: 0;
+}
+
+/* Шрифти як на стор.1 */
+#screen-shot-area[data-route="tg"] .tg-list-ticker {
+    font-family: "Gilroy-Bold", Helvetica;
+    font-size: 28px;
+    letter-spacing: -0.5px;
+}
+
+#screen-shot-area[data-route="tg"] .tg-list-subtitle {
+    font-family: "Gilroy-Regular", Helvetica;
+    font-size: 22px;
+    opacity: 0.6;
+}
+
+#screen-shot-area[data-route="tg"] .tg-trend {
+    font-family: "Gilroy-Bold", Helvetica;
+    font-size: 28px;
+}
+
+#screen-shot-area[data-route="tg"] .tg-change {
+    font-family: "Gilroy-Bold", Helvetica;
+    font-size: 28px;
+}
+
+
+/* Market Cap + Dominance в одному рядку */
+#screen-shot-area[data-route="tg"] .tg-market-cap__row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 24px;
+}
+
+#screen-shot-area[data-route="tg"] .tg-market-cap__value {
+    font-family: "Gilroy-Black", Helvetica;
+    font-size: 108px;
+    letter-spacing: 2px;
+}
+
+#screen-shot-area[data-route="tg"] .tg-market-dominance {
+    font-family: "Gilroy-Bold", Helvetica;
+    font-size: 34px;
+    opacity: 0.8;
+}
+
+/* Meta info як у стор.1 */
+#screen-shot-area[data-route="tg"] .tg-meta p {
+    font-family: "Gilroy-Regular", Helvetica;
+    font-size: 34px;
+    opacity: 0.6;
+    margin: 4px 0;
+}
+
+/* === CUSTOM GRID LAYOUT for Combined Page === */
+#screen-shot-area[data-route="tg"] .custom-layout {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1.2fr;
+    grid-template-rows: auto 1fr auto;
+    grid-template-areas:
+        "btc eth leaders"
+        "popular popular leaders"
+        "market market fear";
+    gap: 24px;
+}
+
+/* Пропорційне зменшення блоків */
+#screen-shot-area[data-route="tg"] .tg-card {
+    background-color: #ccbdda1a !important;
+    border: 1px solid #ccbdda4c !important;
+    border-radius: 24px;
+    padding: 24px 18px;
+}
+
+/* --- Оновлений дизайн картки --- */
+.card.coin-stats {
+    height: fit-content;
+    padding: 24px 18px 18px;
+    border-radius: 24px;
+    border: 1px solid rgba(204, 189, 218, 0.3);
+    background: rgba(204, 189, 218, 0.1);
+    backdrop-filter: blur(8px);
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* --- Заголовок монети --- */
+.coin-stats__header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.coin-stats__header .icon {
+    width: 46px;
+    height: 46px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.card-title {
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 28.8px;
+}
+
+/* --- Стилі елементів статистики --- */
+.coin-stats__item {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    padding: 8px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.coin-stats__item:first-of-type {
+    border-top: none;
+}
+
+.coin-stats__item .title {
+    font-size: 20px;
+    color: #ccc;
+}
+
+.coin-stats__item .subtitle {
+    font-size: 28px;
+    font-weight: 600;
+    color: #fff;
+}
+
+
+
+/* ================== Telegram page (route: #/tg) • CLEAN ================== */
+
+/* Базові налаштування для полотна TG */
+#screen-shot-area[data-route="tg"] {
+    /* фон і типографіка */
+    background-color: #151517 !important;
+    color: #fff !important;
+    font-family: "Gilroy", "Exo 2", Helvetica, sans-serif;
+
+    /* розміри полотна задаються з JS через --canvas-*  */
+    display: flex;
+    flex-direction: column;
+    width: var(--canvas-width, 1350px);
+    height: var(--canvas-height, 1080px);
+    padding: 24px 32px;
+
+    /* єдина змінна проміжків для TG */
+    --gap-tg: 10px;
+}
+
+/* Хедер TG */
+#screen-shot-area[data-route="tg"] .tg-market {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+#screen-shot-area[data-route="tg"] .tg-market__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+#screen-shot-area[data-route="tg"] .tg-market__eyebrow {
+    font-size: 12px;
+    letter-spacing: 0.24em;
+    color: var(--muted, #9aa3af);
+    margin: 0 0 4px;
+}
+
+#screen-shot-area[data-route="tg"] .tg-market__title {
+    margin: 0;
+    font-size: 34px;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+}
+
+#screen-shot-area[data-route="tg"] .tg-market__date {
+    align-self: center;
+    font-size: 18px;
+    font-weight: 700;
+    padding: 8px 18px;
+    border-radius: 50px;
+    border: 1px solid #2a2f3b;
+    background: #1b1f25;
+}
+
+/* ======= ГОЛОВНА СІТКА: 10px між усіма плитками ======= */
+#screen-shot-area[data-route="tg"] .tg-market__grid {
+    flex: 1;
+    display: grid;
+
+    /* Розкладка: 
+     "btc  eth  leaders"
+     "popular popular leaders"
+     "market market fear"  */
+    grid-template-columns: repeat(2, minmax(0, 1fr)) minmax(0, 1fr);
+    grid-template-rows: auto auto 1fr;
+    grid-template-areas:
+        "btc eth leaders"
+        "popular popular leaders"
+        "market market fear";
+
+    gap: 10px;
+    /* ← ключове */
+}
+
+/* Уніфікована картка */
+#screen-shot-area[data-route="tg"] .tg-card {
+    background: rgba(203, 189, 218, 0.08);
+    border: 1px solid rgba(204, 189, 218, 0.30);
+    border-radius: 24px;
+    padding: 14px;
+    /* трохи компактніше */
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    /* внутрішні відступи між елементами картки */
+}
+
+/* Заголовки карток */
+#screen-shot-area[data-route="tg"] .tg-card h3 {
+    margin: 0 0 8px;
+    font-size: 22px;
+    letter-spacing: 0.02em;
+    color: #ffd500;
+    text-transform: uppercase;
+    font-family: "Gilroy-Bold", Helvetica, sans-serif;
+}
+
+/* Telegram grid areas */
+#screen-shot-area[data-route="tg"] .tg-grid-btc {
+    grid-area: btc;
+}
+
+#screen-shot-area[data-route="tg"] .tg-grid-eth {
+    grid-area: eth;
+}
+
+#screen-shot-area[data-route="tg"] .tg-grid-leaders {
+    height: fit-content;
+    grid-area: leaders;
+}
+
+#screen-shot-area[data-route="tg"] .tg-grid-popular {
+    width: 730px;
+    grid-area: popular;
+}
+
+#screen-shot-area[data-route="tg"] .tg-grid-market {
+    width: 730px;
+    height: fit-content;
+    grid-area: market;
+}
+
+#screen-shot-area[data-route="tg"] .tg-grid-fear {
+    grid-area: fear;
+    grid-row: 2 / 4;
+    align-self: stretch;
+    margin-top: 195px;
+}
+
+/* ======= Картки монет (BTC / ETH) ======= */
+#screen-shot-area[data-route="tg"] .tg-coin {
+    min-width: 320px;
+    /* компактно під TG */
+}
+
+#screen-shot-area[data-route="tg"] .tg-coin-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#screen-shot-area[data-route="tg"] .tg-coin-title .avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 12px;
+    object-fit: cover;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+#screen-shot-area[data-route="tg"] .tg-coin-label {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+}
+
+#screen-shot-area[data-route="tg"] .tg-coin-subtitle {
+    margin: 4px 0 0;
+    font-size: 14px;
+    opacity: 0.7;
+}
+
+#screen-shot-area[data-route="tg"] .tg-rectangle {
+    width: 100%;
+    height: 1px;
+    background-color: #ffffff1a;
+    margin: 8px 0;
+}
+
+#screen-shot-area[data-route="tg"] .tg-price {
+    font-size: 32px;
+    font-weight: 900;
+    margin: 6px 0 4px;
+}
+
+#screen-shot-area[data-route="tg"] .tg-meta {
+    color: #9aa3af;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+#screen-shot-area[data-route="tg"] .tg-meta p {
+    margin: 2px 0;
+}
+
+/* ======= Списки монет (Популярні / Лідери) ======= */
+#screen-shot-area[data-route="tg"] .tg-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+
+    /* критично: відступи між рядками списку */
+    gap: var(--gap-tg);
+}
+
+#screen-shot-area[data-route="tg"] .tg-list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid #ffffff1a;
+    font-size: 14px;
+}
+
+#screen-shot-area[data-route="tg"] .tg-list-item:last-child {
+    border-bottom: none;
+}
+
+#screen-shot-area[data-route="tg"] .tg-left {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+#screen-shot-area[data-route="tg"] .avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 1px solid #232833;
+    display: inline-grid;
+    place-items: center;
+}
+
+#screen-shot-area[data-route="tg"] .avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+#screen-shot-area[data-route="tg"] .tg-names {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+#screen-shot-area[data-route="tg"] .tg-list-ticker {
+    font-family: "Gilroy-Bold", Helvetica;
+    font-weight: 700;
+    font-size: 20px;
+    letter-spacing: -0.2px;
+}
+
+#screen-shot-area[data-route="tg"] .tg-list-subtitle {
+    font-family: "Gilroy-Regular", Helvetica;
+    font-size: 14px;
+    opacity: 0.7;
+}
+
+#screen-shot-area[data-route="tg"] .tg-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+#screen-shot-area[data-route="tg"] .tg-trend {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: "Gilroy-Bold", Helvetica;
+    font-size: 20px;
+}
+
+#screen-shot-area[data-route="tg"] .trend-icon {
+    width: 16px;
+    height: 10px;
+    flex-shrink: 0;
+}
+
+#screen-shot-area[data-route="tg"] .tg-change {
+    font-family: "Gilroy-Bold", Helvetica;
+    font-size: 20px;
+    color: #fff;
+}
+
+#screen-shot-area[data-route="tg"] .tg-change.is-positive {
+    color: inherit;
+}
+
+#screen-shot-area[data-route="tg"] .tg-change.is-negative {
+    color: inherit;
+}
+
+/* ======= Ринкова капіталізація + Домінація ======= */
+#screen-shot-area[data-route="tg"] .tg-market-cap__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--gap-tg);
+}
+
+#screen-shot-area[data-route="tg"] .tg-market-cap__value {
+    font-family: "Gilroy-Black", Helvetica;
+    font-size: 64px;
+    /* трохи менше, щоб краще влазив текст */
+    letter-spacing: 1px;
+}
+
+#screen-shot-area[data-route="tg"] .tg-market-dominance {
+    font-family: "Gilroy-Bold", Helvetica;
+    font-size: 24px;
+    opacity: 0.85;
+}
+
+/* ======= Індекс страху та жадібності ======= */
+#screen-shot-area[data-route="tg"] .tg-fear,
+#screen-shot-area[data-route="page-2"] .tg-fear {
+    justify-content: flex-start;
+    align-items: center;
+    min-height: 327px;
+    height: auto;
+    gap: 60px;
+}
+
+#screen-shot-area[data-route="tg"] .tg-card-head,
+#screen-shot-area[data-route="page-2"] .tg-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 78px;
+}
+
+/* Заголовок Індексу страху та жадібності */
+.tg-card.tg-fear .tg-card-head h3 {
+    margin: 0 0 0px !important;
+}
+
+#screen-shot-area[data-route="tg"] .tg-badge,
+#screen-shot-area[data-route="page-2"] .tg-badge {
+    padding: 4px 10px;
+    border: 1px solid #ccbdda4c !important;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #fff;
+}
+
+/* ======= Уніфікована монетна картка для BTC/ETH ======= */
+#screen-shot-area[data-route="tg"] .coin-stats {
+    padding: 14px;
+    border-radius: 20px;
+    border: 1px solid rgba(204, 189, 218, 0.30);
+    background: rgba(204, 189, 218, 0.10);
+    backdrop-filter: blur(8px);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#screen-shot-area[data-route="tg"] .coin-stats__header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#screen-shot-area[data-route="tg"] .coin-stats__header .icon {
+    width: 38px;
+    height: 38px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+#screen-shot-area[data-route="tg"] .card-title {
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 28px;
+    color: #ffd500;
+}
+
+#screen-shot-area[data-route="tg"] .coin-stats__item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+#screen-shot-area[data-route="tg"] .coin-stats__item:first-of-type {
+    border-top: none;
+}
+
+#screen-shot-area[data-route="tg"] .coin-stats__item .title {
+    font-size: 18px;
+    color: #ccc;
+}
+
+#screen-shot-area[data-route="tg"] .coin-stats__item .subtitle {
+    font-size: 24px;
+    font-weight: 600;
+    color: #fff;
+}
+
+/* ================== Стилі для Лідерів ================== */
+
+#screen-shot-area[data-route="tg"] .tg-market__grid {
+    grid-template-columns: 317px 405px 540px;
+    /* 0.9fr 0.9fr 1fr */
+}
+
+#screen-shot-area[data-route="tg"] .coins-grid {
+    display: grid;
+    grid-template-columns: 360px 360px;
+    gap: 10px;
+}
+
