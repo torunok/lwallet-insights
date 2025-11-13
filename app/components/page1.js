@@ -1,17 +1,5 @@
 ﻿// app/components/page1.js
-import { escapeHtml } from '../utils.js';
-
-function nf(n, opt = { maximumFractionDigits: 2 }) {
-  try {
-    return new Intl.NumberFormat('uk-UA', opt).format(n);
-  } catch {
-    return String(n);
-  }
-}
-
-function usd(n, opt = { maximumFractionDigits: 2, minimumFractionDigits: 0 }) {
-  return `$${nf(n, opt)}`;
-}
+import { escapeHtml, formatPriceUSD } from '../utils.js';
 
 function compactUSD(x) {
   const a = Math.abs(x);
@@ -19,7 +7,7 @@ function compactUSD(x) {
   if (a >= 1e9) return `$${(x / 1e9).toFixed(2)}B`;
   if (a >= 1e6) return `$${(x / 1e6).toFixed(2)}M`;
   if (a >= 1e3) return `$${(x / 1e3).toFixed(1)}K`;
-  return usd(x);
+  return formatPriceUSD(x);
 }
 
 function trendSVG(change = 0, sizeUp = [20, 12], sizeDown = [20, 12]) {
@@ -47,7 +35,7 @@ export function page1(state) {
         <div class="rectangle"></div>
         <div class="frame-2">
           <div class="text-wrapper-2">Ціна</div>
-          <div class="text-wrapper-3">${state.btc?.price ? usd(state.btc.price, { maximumFractionDigits: 0, minimumFractionDigits: 0 }) : '—'}</div>
+          <div class="text-wrapper-3">${state.btc?.price ? formatPriceUSD(state.btc.price, { ticker: state.btc?.ticker || 'btc' }) : '—'}</div>
         </div>
         <div class="frame-2">
           <div class="text-wrapper-2">Час підтвердження</div>
@@ -67,7 +55,7 @@ export function page1(state) {
         <div class="rectangle"></div>
         <div class="frame-2">
           <div class="text-wrapper-2">Ціна</div>
-          <div class="text-wrapper-3">${state.eth?.price ? usd(state.eth.price, { maximumFractionDigits: 0, minimumFractionDigits: 0 }) : '—'}</div>
+          <div class="text-wrapper-3">${state.eth?.price ? formatPriceUSD(state.eth.price, { ticker: state.eth?.ticker || 'eth' }) : '—'}</div>
         </div>
         <div class="frame-2">
           <div class="text-wrapper-2">Ціна газу</div>
@@ -123,9 +111,7 @@ export function page1(state) {
               <div class="frame-7">
                 <div class="frame-8 price-line">
                   ${trendSVG(m.change)}
-                  <div class="text-wrapper-8 value-text">${
-                    m.price != null ? usd(m.price, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—'
-                  }</div>
+                  <div class="text-wrapper-8 value-text">${m.price != null ? formatPriceUSD(m.price, { ticker: m.ticker, fixedDecimals: 2 }) : '—'}</div>
                 </div>
                 <div class="frame-9">
                   <div class="text-wrapper-8 value-text">

@@ -4,11 +4,8 @@
 // ===========================
 // app/components/page2.js
 // ===========================
-import { escapeHtml } from '../utils.js';
+import { escapeHtml, formatPriceUSD } from '../utils.js';
 
-function nf(n, opt={ maximumFractionDigits: 2 }) {
-  try { return new Intl.NumberFormat('uk-UA', opt).format(n); } catch { return String(n); }
-}
 function trendSVG(change=0, sizeUp=[20,12], sizeDown=[20,12]) {
   const up = Number(change) > 0;
   if (up) {
@@ -42,7 +39,7 @@ export function page2(state) {
       <div class="frame-8">
         <div class="frame-7 price-line">
           ${trendSVG(m.change)}
-          <span class="text-wrapper-2 value-text">${m.price? `$${nf(m.price,{maximumFractionDigits:2})}`:'—'}</span>
+          <span class="text-wrapper-2 value-text">${m.price ? formatPriceUSD(m.price, { ticker: m.ticker }) : '—'}</span>
         </div>
         <div class="div-wrapper">
           <span class="text-wrapper-2 value-text">${(m.change||0)>0?'+':''}${isFinite(m.change)? Number(m.change).toFixed(2):'—'}%</span>

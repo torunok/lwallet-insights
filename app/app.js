@@ -147,40 +147,55 @@ const readOpts = () => {
 };
 
 function initExportButtons() {
-  const saveOne = document.getElementById('save-one') || document.getElementById('save-btn');
-  const saveBoth = document.getElementById('save-both');
+  const currentButtons = Array.from(document.querySelectorAll('[data-export="current"]'));
+  const allButtons = Array.from(document.querySelectorAll('[data-export="all"]'));
+  const toggleDisabled = (buttons, disabled) => {
+    buttons.forEach((btn) => {
+      if (btn) btn.disabled = disabled;
+    });
+  };
 
-  saveOne?.addEventListener('click', async () => {
-    const opts = readOpts();
-    saveOne.disabled = true;
-    document.body.classList.add('freeze', 'capturing');
-    try {
-      await exportImage(opts);
-    } finally {
-      document.body.classList.remove('freeze', 'capturing');
-      saveOne.disabled = false;
-    }
-  });
-
-  // Експорт двох сторінок (послідовно, без ZIP)
-  saveBoth?.addEventListener('click', async () => {
-    const opts = readOpts();
-    saveBoth.disabled = true;
-    document.body.classList.add('freeze', 'capturing');
-    const current = getRoute();
-    try {
-      for (const r of ROUTES) {
-        location.hash = `#/${r}`;
-        // невелика пауза, щоб рендер завершився
-        await new Promise(res => setTimeout(res, 60));
-        await exportImage({ ...opts, filenameSuffix: `-${r}` });
+  if (currentButtons.length) {
+    const handleCurrentClick = async (event) => {
+      event.preventDefault();
+      const opts = readOpts();
+      toggleDisabled(currentButtons, true);
+      document.body.classList.add('freeze', 'capturing');
+      try {
+        await exportImage(opts);
+      } finally {
+        document.body.classList.remove('freeze', 'capturing');
+        toggleDisabled(currentButtons, false);
       }
-    } finally {
-      location.hash = `#/${current}`;
-      document.body.classList.remove('freeze', 'capturing');
-      saveBoth.disabled = false;
-    }
-  });
+    };
+    currentButtons.forEach((btn) => {
+      btn.addEventListener('click', handleCurrentClick);
+    });
+  }
+
+  if (allButtons.length) {
+    const handleAllClick = async (event) => {
+      event.preventDefault();
+      const opts = readOpts();
+      const currentRoute = getRoute();
+      toggleDisabled(allButtons, true);
+      document.body.classList.add('freeze', 'capturing');
+      try {
+        for (const route of ROUTES) {
+          location.hash = `#/${route}`;
+          await new Promise((res) => setTimeout(res, 60));
+          await exportImage({ ...opts, filenameSuffix: `-${route}` });
+        }
+      } finally {
+        location.hash = `#/${currentRoute}`;
+        document.body.classList.remove('freeze', 'capturing');
+        toggleDisabled(allButtons, false);
+      }
+    };
+    allButtons.forEach((btn) => {
+      btn.addEventListener('click', handleAllClick);
+    });
+  }
 }
 
 function applyPageSpec(route) {

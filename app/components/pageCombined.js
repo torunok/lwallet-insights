@@ -1,39 +1,10 @@
 ﻿// app/components/pageCombined.js
-import { escapeHtml, formatNumber, dash } from '../utils.js';
+import { escapeHtml, dash, formatPriceUSD } from '../utils.js';
 
 const FEAR_GAUGE_MIN = 0;
 const FEAR_GAUGE_MAX = 100;
 const FEAR_GAUGE_TO_DEG = 1.8;
 
-function nf(n, opt = { maximumFractionDigits: 2 }) {
-  try { return new Intl.NumberFormat('uk-UA', opt).format(n); }
-  catch { return String(n); }
-}
-function usd(value, { minimumFractionDigits = 0, maximumFractionDigits = 0 } = {}) {
-  if (!isFinite(value)) return '-';
-  const abs = Math.abs(Number(value));
-  let min = minimumFractionDigits;
-  let max = maximumFractionDigits;
-
-  if (abs >= 1000) {
-    min = 0;
-    max = 0;
-  } else if (abs >= 100) {
-    min = Math.max(min, 1);
-    max = Math.max(max, 1);
-  } else if (abs >= 1) {
-    min = Math.max(min, 2);
-    max = Math.max(max, 2);
-  } else if (abs >= 0.01) {
-    min = Math.max(min, 4);
-    max = Math.max(max, 4);
-  } else {
-    min = Math.max(min, 6);
-    max = Math.max(max, 6);
-  }
-
-  return `$${formatNumber(value, { minimumFractionDigits: min, maximumFractionDigits: max })}`;
-}
 function compactUSD(x) {
   if (!isFinite(x)) return '—';
   const a = Math.abs(x);
@@ -41,7 +12,7 @@ function compactUSD(x) {
   if (a >= 1e9)  return `$${(x / 1e9).toFixed(2)}B`;
   if (a >= 1e6)  return `$${(x / 1e6).toFixed(2)}M`;
   if (a >= 1e3)  return `$${(x / 1e3).toFixed(1)}K`;
-  return usd(x);
+  return formatPriceUSD(x);
 }
 function pct(change) {
   if (!isFinite(change)) return '—';
@@ -103,7 +74,7 @@ function renderListItem(m) {
       </div>
     </div>
     <div class="tg-right">
-      <span class="tg-trend">${trendSVG(m.change)} ${usd(m.price, { ...m.precision })}</span>
+      <span class="tg-trend">${trendSVG(m.change)} ${formatPriceUSD(m.price, { ticker: m.ticker, fixedDecimals: m.fixedDecimals })}</span>
       <span class="tg-change ${changeClass(m.change)}">${pct(m.change)}</span>
     </div>
   </li>`;
@@ -113,10 +84,7 @@ function renderPopular(list = []) {
   const items = list.slice(0, 4);
   if (!items.length)
     return `<li class="tg-list-item tg-list-item--empty">Немає популярних активів</li>`;
-  return items.map((item) => renderListItem({
-    ...item,
-    precision: { minimumFractionDigits: 2, maximumFractionDigits: 2 },
-  })).join('');
+  return items.map((item) => renderListItem({ ...item, fixedDecimals: 2 })).join('');
 }
 
 function renderLeaders(list = []) {
@@ -126,32 +94,15 @@ function renderLeaders(list = []) {
   return items.map(renderListItem).join('');
 }
 
-function formatPriceWithCurrency(value, { decimalsBelow = 2, decimalsAbove = 0 } = {}) {
+function formatPriceWithCurrency(value, { ticker } = {}) {
   const num = Number(value);
-  if (!isFinite(num)) return dash(value);
-  const abs = Math.abs(num);
-  let fractionDigits;
-  if (abs >= 1000) {
-    fractionDigits = decimalsAbove;
-  } else if (abs >= 1) {
-    fractionDigits = decimalsBelow;
-  } else if (abs >= 0.01) {
-    fractionDigits = Math.max(decimalsBelow, 3);
-  } else if (abs >= 0.001) {
-    fractionDigits = 4;
-  } else {
-    fractionDigits = 6;
-  }
-  const formatted = formatNumber(num, {
-    minimumFractionDigits: fractionDigits,
-    maximumFractionDigits: fractionDigits,
-  });
-  return `${formatted}$`;
+  if (!Number.isFinite(num)) return dash(value);
+  return formatPriceUSD(num, { currencyPosition: 'suffix', ticker });
 }
 
 function renderCoinCard(title, data = {}, { subtitle, metaLines = [] } = {}) {
   const price = isFinite(data.price)
-    ? usd(data.price, { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+    ? formatPriceUSD(data.price, { ticker: data.ticker })
     : '—';
   const image = data.image || '';
   return `
@@ -229,9 +180,9 @@ export function pageCombined(state) {
           <div class="card coin-stats">
             <div class="coin-stats__header">
               <div class="icon" style="background-image: url('https://s2.coinmarketcap.com/static/img/coins/64x64/1.png');"></div>
-              <div class="card-title" style="color: rgb(255, 213, 0);">BITCOIN</div>
-            </div>
-          <div class="coin-stats__item"><div class="title">Ціна</div><div class="subtitle">${formatPriceWithCurrency(btc.price, { decimalsBelow: 0, decimalsAbove: 0 })}</div></div>
+          <div class="card-title" style="color: rgb(255, 213, 0);">BITCOIN</div>
+        </div>
+      <div class="coin-stats__item"><div class="title">Ціна</div><div class="subtitle">${formatPriceWithCurrency(btc.price, { ticker: btc.ticker || 'btc' })}</div></div>
             <div class="coin-stats__item"><div class="title">Час виконання транзакції</div><div class="subtitle">${dash(btc.conf)}</div></div>
             <div class="coin-stats__item"><div class="title">Комісія</div><div class="subtitle">${dash(btc.fee)}</div></div>
           </div>
@@ -239,9 +190,9 @@ export function pageCombined(state) {
           <div class="card coin-stats">
             <div class="coin-stats__header">
               <div class="icon" style="background-image: url('https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png');"></div>
-              <div class="card-title" style="color: rgb(255, 213, 0);">ETHEREUM</div>
-            </div>
-          <div class="coin-stats__item"><div class="title">Ціна</div><div class="subtitle">${formatPriceWithCurrency(eth.price, { decimalsBelow: 2, decimalsAbove: 0 })}</div></div>
+          <div class="card-title" style="color: rgb(255, 213, 0);">ETHEREUM</div>
+        </div>
+      <div class="coin-stats__item"><div class="title">Ціна</div><div class="subtitle">${formatPriceWithCurrency(eth.price, { ticker: eth.ticker || 'eth' })}</div></div>
             <div class="coin-stats__item"><div class="title">Ціна газу</div><div class="subtitle">${dash(eth.gasPrice)}</div></div>
             <div class="coin-stats__item"><div class="title">Комісія</div><div class="subtitle">${dash(eth.transactionFee)}</div></div>
           </div>

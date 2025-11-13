@@ -4,6 +4,74 @@ export function formatNumber(n, opt = {}) {
   catch { return String(n); }
 }
 
+const PRICE_MAX_DECIMALS = 6;
+const MAJOR_TICKERS = new Set(['btc', 'eth']);
+
+function normalizeTicker(value) {
+  return typeof value === 'string' ? value.trim().toLowerCase() : '';
+}
+
+function extractFractionDigits(value, maxDigits = PRICE_MAX_DECIMALS) {
+  if (!Number.isFinite(value)) return '';
+  const abs = Math.abs(value);
+  let str = abs.toString();
+  if (str.includes('e') || str.includes('E')) {
+    str = abs.toFixed(maxDigits);
+  }
+  const [, fraction = ''] = str.split('.');
+  return fraction.replace(/[^0-9]/g, '').slice(0, maxDigits);
+}
+
+function determineFractionLength(value) {
+  if (!Number.isFinite(value)) return 0;
+  const abs = Math.abs(value);
+  if (abs >= 1000) return 2;
+  const digits = extractFractionDigits(abs);
+  if (!digits.length) return 0;
+  let length = 0;
+  for (let i = 0; i < digits.length && i < PRICE_MAX_DECIMALS; i += 1) {
+    length = i + 1;
+    const current = Number(digits[i]);
+    if (current > 5) break;
+    if (i === digits.length - 1) break;
+  }
+  return length;
+}
+
+export function formatPriceUSD(
+  value,
+  {
+    currencyPosition = 'prefix',
+    ticker,
+    fixedDecimals,
+    forceDecimals = false,
+  } = {},
+) {
+  const num = Number(value);
+  if (!isFinite(num)) return '—';
+
+  let fractionDigits;
+
+  if (typeof fixedDecimals === 'number') {
+    fractionDigits = Math.max(0, Math.min(PRICE_MAX_DECIMALS, fixedDecimals));
+  } else {
+    const isMajor = MAJOR_TICKERS.has(normalizeTicker(ticker));
+    if (isMajor && !forceDecimals) {
+      fractionDigits = 0;
+    } else {
+      fractionDigits = determineFractionLength(num);
+    }
+  }
+
+  const formatted = formatNumber(num, {
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
+  });
+
+  if (currencyPosition === 'suffix') return `${formatted}$`;
+  return `$${formatted}`;
+}
+
 // Формат валюти у скороченні: 1 234 567 -> $1.23M
 export function formatCompactUSD(n) {
   const num = Number(n);

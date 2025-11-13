@@ -20,6 +20,10 @@
           <span class="nav-refresh-btn__label">Оновити</span>
           <span class="nav-refresh-btn__spinner" aria-hidden="true"></span>
         </button>
+        <div class="nav-export-controls" aria-label="Експорт сторінок">
+          <button class="btn" data-export="all">Зберегти все</button>
+          <button class="save-btn" data-export="current">Зберегти поточну</button>
+        </div>
       </nav>
 
       <div class="toolbar">
@@ -29,8 +33,8 @@
           <span></span>
         </button>
         <div class="export-controls">
-          <button id="save-both" class="btn">Зберегти все</button>
-          <button id="save-btn" class="save-btn">Зберегти поточну</button>
+          <button id="save-both" class="btn" data-export="all">Зберегти все</button>
+          <button id="save-btn" class="save-btn" data-export="current">Зберегти поточну</button>
         </div>
       </div>
     </header>
