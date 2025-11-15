@@ -3,6 +3,7 @@ const PRO_BASE = `${PROXY_BASE}/v1`;
 const DATA_BASE = `${PROXY_BASE}/data-api/v3`;
 const FNG_BASE = `${PROXY_BASE}/v3`;
 const FEAR_GREED_LIMIT = 30; // grab multiple entries so we can sort client-side
+const ALT_FNG_URL = 'https://api.alternative.me/fng/';
 
 function resolveTimestamp(entry) {
   const raw =
@@ -35,6 +36,58 @@ function pickLatestEntry(list) {
     }
   }
   return best || null;
+}
+
+function normaliseTimestampValue(value) {
+  if (value == null) return null;
+  const num = Number(value);
+  if (!Number.isFinite(num)) return null;
+  if (num > 1e12) return num;
+  if (num > 1e9) return num * 1000;
+  if (num > 1e6) return num * 1000;
+  return num;
+}
+
+function pickPreferredSnapshot(options) {
+  if (!Array.isArray(options)) return null;
+  return (
+    options
+      .filter(Boolean)
+      .sort((a, b) => (normaliseTimestampValue(b?.timestamp) || 0) - (normaliseTimestampValue(a?.timestamp) || 0))[0]
+    || null
+  );
+}
+
+async function fetchAlternativeFearGreed() {
+  let res;
+  try {
+    res = await fetch(ALT_FNG_URL, { headers: { Accept: 'application/json' } });
+  } catch {
+    return null;
+  }
+  if (!res.ok) {
+    return null;
+  }
+  let payload;
+  try {
+    payload = await res.json();
+  } catch {
+    return null;
+  }
+  const entry = payload?.data?.[0];
+  if (!entry) return null;
+  const value = Number(entry.value);
+  return {
+    value: Number.isFinite(value) ? value : null,
+    classification:
+      entry.value_classification
+      || entry.classification
+      || entry.score_classification
+      || entry.valueClassification
+      || 'Unknown',
+    timestamp: normaliseTimestampValue(entry.timestamp),
+    source: 'alternative',
+  };
 }
 
 function buildQuery(params = {}) {
@@ -85,7 +138,7 @@ export function getLogoUrlById(id, size = 64) {
   return `https://s2.coinmarketcap.com/static/img/coins/${safeSize}x${safeSize}/${id}.png`;
 }
 
-export async function fetchFearGreedSnapshot() {
+async function fetchCmcFearGreedSnapshot() {
   const url = `${FNG_BASE}/fear-and-greed/historical?limit=${FEAR_GREED_LIMIT}`;
   let res;
   try {
@@ -104,13 +157,23 @@ export async function fetchFearGreedSnapshot() {
   const list = Array.isArray(rawData) ? rawData : rawData ? [rawData] : [];
   const entry = pickLatestEntry(list);
   if (!entry) return null;
+  const value = Number(entry.value ?? entry.score ?? entry.index ?? entry.fearGreedValue);
   return {
-    value: Number(entry.value ?? entry.score ?? entry.index ?? entry.fearGreedValue),
+    value: Number.isFinite(value) ? value : null,
     classification:
       entry.value_classification
       || entry.classification
       || entry.score_classification
       || 'Unknown',
-    timestamp: entry.timestamp || entry.lastUpdated,
+    timestamp: resolveTimestamp(entry) || entry.timestamp || entry.lastUpdated,
+    source: 'cmc',
   };
+}
+
+export async function fetchFearGreedSnapshot() {
+  const [alternative, cmc] = await Promise.all([
+    fetchAlternativeFearGreed().catch(() => null),
+    fetchCmcFearGreedSnapshot().catch(() => null),
+  ]);
+  return pickPreferredSnapshot([alternative, cmc]);
 }
