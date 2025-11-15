@@ -2,6 +2,40 @@ const PROXY_BASE = 'https://lwallet-cmc-proxy.moloshiigpt.workers.dev';
 const PRO_BASE = `${PROXY_BASE}/v1`;
 const DATA_BASE = `${PROXY_BASE}/data-api/v3`;
 const FNG_BASE = `${PROXY_BASE}/v3`;
+const FEAR_GREED_LIMIT = 30; // grab multiple entries so we can sort client-side
+
+function resolveTimestamp(entry) {
+  const raw =
+    entry?.timestamp
+    || entry?.lastUpdated
+    || entry?.last_updated
+    || entry?.time
+    || entry?.date;
+  if (!raw) return 0;
+  const numeric = Number(raw);
+  if (Number.isFinite(numeric)) {
+    if (numeric > 1e12) return numeric;
+    if (numeric > 1e9) return numeric * 1000;
+    return numeric;
+  }
+  const parsed = Date.parse(raw);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function pickLatestEntry(list) {
+  if (!Array.isArray(list) || !list.length) return null;
+  let best = null;
+  let bestTs = -Infinity;
+  for (const item of list) {
+    if (!item) continue;
+    const ts = resolveTimestamp(item);
+    if (ts >= bestTs) {
+      best = item;
+      bestTs = ts;
+    }
+  }
+  return best || null;
+}
 
 function buildQuery(params = {}) {
   const entries = Object.entries(params)
@@ -52,7 +86,7 @@ export function getLogoUrlById(id, size = 64) {
 }
 
 export async function fetchFearGreedSnapshot() {
-  const url = `${FNG_BASE}/fear-and-greed/historical?limit=1&sort=timestamp&sort_dir=desc`;
+  const url = `${FNG_BASE}/fear-and-greed/historical?limit=${FEAR_GREED_LIMIT}`;
   let res;
   try {
     res = await fetch(url, { headers: { Accept: 'application/json' } });
@@ -66,7 +100,9 @@ export async function fetchFearGreedSnapshot() {
     throw new Error(`CMC data API error: ${res.status}`);
   }
   const payload = await res.json();
-  const entry = payload?.data?.[0];
+  const rawData = payload?.data;
+  const list = Array.isArray(rawData) ? rawData : rawData ? [rawData] : [];
+  const entry = pickLatestEntry(list);
   if (!entry) return null;
   return {
     value: Number(entry.value ?? entry.score ?? entry.index ?? entry.fearGreedValue),
