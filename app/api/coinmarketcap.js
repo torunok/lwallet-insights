@@ -52,7 +52,7 @@ export function getLogoUrlById(id, size = 64) {
 }
 
 export async function fetchFearGreedSnapshot() {
-  const url = `${FNG_BASE}/fear-and-greed/historical?limit=1`;
+  const url = `${FNG_BASE}/fear-and-greed/historical?limit=1&sort=timestamp&sort_dir=desc`;
   let res;
   try {
     res = await fetch(url, { headers: { Accept: 'application/json' } });
