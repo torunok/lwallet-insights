@@ -1,0 +1,8 @@
+name = "lwallet-cmc-proxy"
+main = "index.js"
+compatibility_date = "2024-05-12"
+
+[vars]
+# Set through `wrangler secret put` or the Cloudflare dashboard.
+CMC_API_KEY = ""
+ETHERSCAN_API_KEY = ""

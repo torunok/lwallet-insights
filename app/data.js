@@ -4,6 +4,7 @@ import {
   fetchFearGreedSnapshot,
   getLogoUrlById,
 } from './api/coinmarketcap.js';
+import { fetchBtcNetworkMetrics, fetchEthNetworkMetrics } from './api/network.js';
 
 const POPULAR_SKIP = new Set(['btc', 'eth', 'usdt', 'usdc', 'steth']);
 
@@ -190,10 +191,10 @@ function estimateBtcNetworkMetrics(entry) {
   const btcPerTx = (feeRateSatVb * 250) / 1e8;
   const feeUsd = price != null ? btcPerTx * price : null;
 
-  const confLabel = confMinutes <= 12 ? '~10 хв' : confMinutes <= 18 ? '~20 хв' : '~30 хв';
-  const feeLabel = feeUsd != null ? `${feeUsd.toFixed(2)} $ за TX` : '—';
+  const confLabel = confMinutes <= 18 ? '~10–20 хв' : '~20–40 хв';
+  const feeLabel = `${Math.round(feeRateSatVb)} sat/vB`;
 
-  return { confLabel, feeLabel };
+  return { confLabel, feeLabel, feeUsd };
 }
 
 function estimateEthNetworkMetrics(entry) {
@@ -204,6 +205,25 @@ function estimateEthNetworkMetrics(entry) {
   const gasPriceLabel = `${gasPriceGwei.toFixed(1)} Gwei`;
   const feeLabel = feeUsd != null ? `${feeUsd.toFixed(2)} $ за TX` : '—';
   return { gasPriceLabel, feeLabel };
+}
+
+function formatBtcFeeLabel(value) {
+  const num = asNum(value);
+  if (num == null) return null;
+  return `${Math.round(num)} sat/vB`;
+}
+
+function formatEthGasLabel(value) {
+  const num = asNum(value);
+  if (num == null) return null;
+  const precise = Number.isInteger(num) ? num : Number(num.toFixed(1));
+  return `${precise} Gwei`;
+}
+
+function formatEthTxFeeLabel(value) {
+  const num = asNum(value);
+  if (num == null) return null;
+  return `$${num.toFixed(2)} за TX`;
 }
 
 export async function loadAll() {
@@ -231,8 +251,33 @@ export async function loadAll() {
 
   const aggregates = aggregateFromMetrics(metricsRaw, markets);
   const fearGreed = deriveFearGreed(metricsRaw, fearGreedRaw);
-  const btcNetwork = estimateBtcNetworkMetrics(btc);
-  const ethNetwork = estimateEthNetworkMetrics(eth);
+  const fallbackBtcNetwork = estimateBtcNetworkMetrics(btc);
+  const fallbackEthNetwork = estimateEthNetworkMetrics(eth);
+
+  const [btcNet, ethNet] = await Promise.all([
+    fetchBtcNetworkMetrics().catch((err) => {
+      console.warn('[loadAll] btc network metrics fallback', err);
+      return null;
+    }),
+    fetchEthNetworkMetrics({ ethPriceUsd: eth.price }).catch((err) => {
+      console.warn('[loadAll] eth network metrics fallback', err);
+      return null;
+    }),
+  ]);
+
+  const btcFeeLabel = formatBtcFeeLabel(btcNet?.satVb) || fallbackBtcNetwork.feeLabel;
+  const btcConfLabel = btcNet?.confLabel || fallbackBtcNetwork.confLabel;
+
+  const effectiveEthFeeUsd =
+    ethNet?.feeUsd != null
+      ? asNum(ethNet.feeUsd)
+      : (asNum(ethNet?.gwei) != null && asNum(eth?.price) != null)
+        ? (asNum(ethNet.gwei) * 21000 * asNum(eth?.price)) / 1e9
+        : null;
+
+  const ethGasPriceLabel = formatEthGasLabel(ethNet?.gwei) || fallbackEthNetwork.gasPriceLabel;
+  const ethFeeLabel =
+    formatEthTxFeeLabel(effectiveEthFeeUsd) || fallbackEthNetwork.feeLabel;
 
   return {
     marketCapUSD: aggregates.marketCapUSD,
@@ -245,15 +290,15 @@ export async function loadAll() {
     btc: {
       image: btc.image,
       price: btc.price,
-      fee: btcNetwork.feeLabel,
-      conf: btcNetwork.confLabel,
+      fee: btcFeeLabel,
+      conf: btcConfLabel,
     },
 
     eth: {
       image: eth.image,
       price: eth.price,
-      gasPrice: ethNetwork.gasPriceLabel,
-      transactionFee: ethNetwork.feeLabel,
+      gasPrice: ethGasPriceLabel,
+      transactionFee: ethFeeLabel,
     },
 
     popular: pickPopular(markets),

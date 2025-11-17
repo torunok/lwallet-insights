@@ -1,7 +1,7 @@
 export const state = {
   date: new Date().toLocaleDateString('uk-UA', { day: '2-digit', month: 'long', year: 'numeric' }),
-  btc: { price: 70123, conf: '~10 хв', fee: '18 sat/vB' },
-  eth: { price: 3821,  conf: '~14 сек', fee: '18 gwei' },
+  btc: { price: 70123, conf: '~10–20 хв', fee: '18 sat/vB' },
+  eth: { price: 3821, gasPrice: '18 Gwei', transactionFee: '$0.95 за TX' },
 
   // --- Сторінка 2:
   popular: [

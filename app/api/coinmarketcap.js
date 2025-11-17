@@ -1,4 +1,4 @@
-const PROXY_BASE = 'https://lwallet-cmc-proxy.moloshiigpt.workers.dev';
+export const PROXY_BASE = 'https://lwallet-cmc-proxy.moloshiigpt.workers.dev';
 const PRO_BASE = `${PROXY_BASE}/v1`;
 const DATA_BASE = `${PROXY_BASE}/data-api/v3`;
 const FNG_BASE = `${PROXY_BASE}/v3`;
