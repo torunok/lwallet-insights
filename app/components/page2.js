@@ -17,23 +17,15 @@ function trendSVG(change=0, sizeUp=[20,12], sizeDown=[20,12]) {
 }
 
 export function page2(state) {
+  console.log('FG from state (page2):', state.fearGreed);
   const d = new Date().toLocaleDateString('uk-UA', { day:'numeric', month:'long' }).toUpperCase();
   const up = state.leadersUp || [];
   const down = state.leadersDown || [];
   const hasFearValue = isFinite(state.fearGreed);
   const fear = hasFearValue ? Math.max(0, Math.min(100, Number(state.fearGreed))) : 0;
   const fearDisplay = hasFearValue ? Math.round(fear) : '—';
-  const mood = (state.classification || '').toString().trim();
-  const fearAriaParts = [`Індекс страху та жадібності: ${fearDisplay}`];
-  if (mood) fearAriaParts.push(mood);
-  const fearAria = fearAriaParts.join('. ');
-  const fearLegend = [
-    { range: '0–24', label: 'Надзвичайний страх' },
-    { range: '25–49', label: 'Страх / Нейтрально' },
-    { range: '50–74', label: 'Жадібність' },
-    { range: '75–100', label: 'Надзвичайна жадібність' },
-  ];
-  const fearValueLabel = fearDisplay === '—' ? '—' : `${fearDisplay}/100`;
+  const mood = (state.classification || '').toString();
+  const fearAria = `Індекс страху та жадібності: ${fearDisplay}`;
 
   const row = (m) => `
     <div class="frame-5">
@@ -100,10 +92,7 @@ export function page2(state) {
 
         <!-- ІНДЕКС СТРАХУ -->
         <section class="group-3">
-          <header class="frame-9">
-            <h2 class="text-wrapper-4">ІНДЕКС СТРАХУ ТА ЖАДІБНОСТІ</h2>
-            ${mood ? `<span class="fear-mood">${escapeHtml(mood)}</span>` : ''}
-          </header>
+          <header class="frame-9"><h2 class="text-wrapper-4">ІНДЕКС СТРАХУ ТА ЖАДІБНОСТІ</h2></header>
           <figure class="group-4" role="img" aria-label="${escapeHtml(fearAria)}">
             <div class="fear-index">
               <div class="fear-index__progress">
@@ -118,18 +107,6 @@ export function page2(state) {
                 </div>
               </div>
             </div>
-            <figcaption class="fear-caption">
-              <span class="fear-caption__value">${fearValueLabel}</span>
-              <span class="fear-caption__text">Оновлюється щодня згідно з ринковими даними</span>
-            </figcaption>
-            <ul class="fear-legend">
-              ${fearLegend.map((item) => `
-                <li>
-                  <span class="fear-legend__range">${escapeHtml(item.range)}</span>
-                  <span class="fear-legend__label">${escapeHtml(item.label)}</span>
-                </li>
-              `).join('')}
-            </ul>
           </figure>
         </section>
       </div>

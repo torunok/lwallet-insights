@@ -94,6 +94,12 @@ function renderLeaders(list = []) {
   return items.map(renderListItem).join('');
 }
 
+function formatPriceWithCurrency(value, { ticker } = {}) {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return dash(value);
+  return formatPriceUSD(num, { currencyPosition: 'suffix', ticker });
+}
+
 function renderCoinCard(title, data = {}, { subtitle, metaLines = [] } = {}) {
   const price = isFinite(data.price)
     ? formatPriceUSD(data.price, { ticker: data.ticker })
@@ -157,21 +163,6 @@ export function pageCombined(state) {
   const dominanceBTC = isFinite(state.dominanceBTC) ? `${Number(state.dominanceBTC).toFixed(1)}%` : '—';
   const dominanceETH = isFinite(state.dominanceETH) ? `${Number(state.dominanceETH).toFixed(1)}%` : '—';
 
-  const btcCard = renderCoinCard('BITCOIN', { ...btc, ticker: btc.ticker || 'btc' }, {
-    subtitle: 'Мережа Bitcoin',
-    metaLines: [
-      `Час підтвердження: ${dash(btc.conf)}`,
-      `Комісія: ${dash(btc.fee)}`,
-    ],
-  });
-  const ethCard = renderCoinCard('ETHEREUM', { ...eth, ticker: eth.ticker || 'eth' }, {
-    subtitle: 'Мережа Ethereum',
-    metaLines: [
-      `Ціна газу: ${dash(eth.gasPrice)}`,
-      `Комісія: ${dash(eth.transactionFee)}`,
-    ],
-  });
-
   return `
   <div class="tg-market">
         <header class="tg-market__header">
@@ -186,8 +177,25 @@ export function pageCombined(state) {
     <div class="tg-market__grid">
       <section class="tg-grid-item tg-grid-coins">
         <div class="coins-grid">
-          ${btcCard}
-          ${ethCard}
+          <div class="card coin-stats">
+            <div class="coin-stats__header">
+              <div class="icon" style="background-image: url('https://s2.coinmarketcap.com/static/img/coins/64x64/1.png');"></div>
+          <div class="card-title" style="color: rgb(255, 213, 0);">BITCOIN</div>
+        </div>
+      <div class="coin-stats__item"><div class="title">Ціна</div><div class="subtitle">${formatPriceWithCurrency(btc.price, { ticker: btc.ticker || 'btc' })}</div></div>
+            <div class="coin-stats__item"><div class="title">Час виконання транзакції</div><div class="subtitle">${dash(btc.conf)}</div></div>
+            <div class="coin-stats__item"><div class="title">Комісія</div><div class="subtitle">${dash(btc.fee)}</div></div>
+          </div>
+
+          <div class="card coin-stats">
+            <div class="coin-stats__header">
+              <div class="icon" style="background-image: url('https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png');"></div>
+          <div class="card-title" style="color: rgb(255, 213, 0);">ETHEREUM</div>
+        </div>
+      <div class="coin-stats__item"><div class="title">Ціна</div><div class="subtitle">${formatPriceWithCurrency(eth.price, { ticker: eth.ticker || 'eth' })}</div></div>
+            <div class="coin-stats__item"><div class="title">Ціна газу</div><div class="subtitle">${dash(eth.gasPrice)}</div></div>
+            <div class="coin-stats__item"><div class="title">Комісія</div><div class="subtitle">${dash(eth.transactionFee)}</div></div>
+          </div>
         </div>
       </section>
 
