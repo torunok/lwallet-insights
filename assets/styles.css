@@ -174,6 +174,31 @@ body {
     display: none;
 }
 
+.export-settings {
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+    gap: 16px;
+    margin: 0;
+    grid-column: 1 / -1;
+}
+
+.export-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--muted);
+    min-width: 120px;
+}
+
+.export-field--checkbox {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    min-width: auto;
+}
+
 .save-btn {
     padding: 8px 14px;
     border: 0;
@@ -572,6 +597,13 @@ body.capturing .appbar {
     .nav-export-controls .btn,
     .nav-export-controls .save-btn {
         width: 100%;
+    }
+
+    .export-settings {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+        gap: 10px;
     }
 }
 
@@ -1421,8 +1453,8 @@ body.capturing .appbar {
 }
 
 .instagram-story .element {
-    font-family: "Gilroy-Black", Helvetica;
-    font-weight: 900;
+    font-family: "Gilroy-Medium", Helvetica;
+    font-weight: 600;
     color: #fff;
     font-size: 40px;
     line-height: 40px;
@@ -1626,7 +1658,8 @@ body.capturing .appbar {
     width: 960px;
     min-height: 64px;
     align-items: center;
-    justify-content: space-around;
+    justify-content: space-between;
+    gap: 16px;
 }
 
 .stat .text-wrapper-4 {
@@ -1665,6 +1698,62 @@ body.capturing .appbar {
     text-align: center;
     letter-spacing: 3.2px;
     line-height: 170px;
+}
+.stat .fear-mood {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 18px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    font-family: "Gilroy-Bold", Helvetica;
+    font-size: 20px;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+    color: #fff;
+}
+.stat .fear-caption {
+    margin-top: 16px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    color: rgba(255, 255, 255, 0.72);
+    font-family: "Gilroy-Semibold", Helvetica;
+}
+.stat .fear-caption__value {
+    font-size: 32px;
+    font-family: "Exo 2-Bold", Helvetica;
+    letter-spacing: 1px;
+    color: #fff;
+}
+.stat .fear-caption__text {
+    font-size: 20px;
+}
+.stat .fear-legend {
+    margin: 24px auto 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.72);
+    font-family: "Gilroy-Medium", Helvetica;
+    max-width: 560px;
+}
+.stat .fear-legend li {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.stat .fear-legend__range {
+    font-size: 18px;
+    letter-spacing: .6px;
+    text-transform: uppercase;
+    color: #fff;
+}
+.stat .fear-legend__label {
+    font-size: 18px;
 }
 
 .tg-copy {

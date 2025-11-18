@@ -8,6 +8,36 @@ import { loadAll } from './data.js';
 import { ROUTES, PAGE_SPECS } from './config.js';
 import { preloadImages } from './images.js';
 
+const STATE_CACHE_KEY = 'lw-insights-cache-v1';
+
+function readCachedState() {
+  if (typeof localStorage === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(STATE_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function persistStateSnapshot(snapshot) {
+  if (typeof localStorage === 'undefined') return;
+  try {
+    localStorage.setItem(STATE_CACHE_KEY, JSON.stringify(snapshot));
+  } catch {
+    // ignore quota errors
+  }
+}
+
+function hydrateStateFromCache() {
+  const cached = readCachedState();
+  if (!cached) return false;
+  Object.assign(state, cached, { ready: true });
+  return true;
+}
+
 function initTheme() {
   const saved = localStorage.getItem('lw_theme');
   const root = document.documentElement;
@@ -116,6 +146,7 @@ async function loadData({ origin = 'auto' } = {}) {
       ready: true,
       date: new Date().toLocaleDateString('uk-UA', { day: '2-digit', month: 'long' }),
     });
+    persistStateSnapshot(state);
 
     render(getRoute(), state);
     applyScale();
@@ -231,6 +262,7 @@ function boot() {
   // встановлюємо розмір полотна під поточний роут ДО першого render
   const initialRoute = getRoute();
   applyPageSpec(initialRoute);
+  hydrateStateFromCache();
 
   render(initialRoute, state);
   applyScale();
@@ -245,6 +277,7 @@ function boot() {
 
   initExportButtons();
   window.refreshData = () => loadData({ origin: 'manual' });
+  loadData({ origin: 'auto' });
 }
 
 document.readyState === 'loading'

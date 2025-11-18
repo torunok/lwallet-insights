@@ -117,9 +117,10 @@ function aggregateFromMetrics(metrics, markets) {
   const dominanceETH = asNum(metrics?.eth_dominance);
   const marketCapUSD = asNum(quote.total_market_cap);
   const volume24hUSD = asNum(quote.total_volume_24h);
+  const volume24hChange = asNum(quote.total_volume_24h_yesterday_percentage_change);
 
   if (marketCapUSD != null && dominanceBTC != null && dominanceETH != null) {
-    return { marketCapUSD, volume24hUSD, dominanceBTC, dominanceETH };
+    return { marketCapUSD, volume24hUSD, dominanceBTC, dominanceETH, volume24hChange };
   }
 
   const totals = (markets || []).reduce(
@@ -143,6 +144,7 @@ function aggregateFromMetrics(metrics, markets) {
     volume24hUSD,
     dominanceBTC: dominanceBTC ?? dominanceFallback(totals.btc),
     dominanceETH: dominanceETH ?? dominanceFallback(totals.eth),
+    volume24hChange,
   };
 }
 
@@ -282,6 +284,7 @@ export async function loadAll() {
   return {
     marketCapUSD: aggregates.marketCapUSD,
     volume24hUSD: aggregates.volume24hUSD,
+    volume24hChange: aggregates.volume24hChange,
     dominanceBTC: aggregates.dominanceBTC,
     dominanceETH: aggregates.dominanceETH,
     fearGreed: fearGreed.value,

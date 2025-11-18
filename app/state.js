@@ -26,6 +26,7 @@ export const state = {
   // --- НОВЕ: для правого стовпчика сторінки 1
   marketCapUSD: 2_450_000_000_000, // глобальна капа
   volume24hUSD: 145_000_000_000,   // обсяг за 24h
+  volume24hChange: 1.4,            // % до вчора
   dominanceBTC: 52.7,              // %
   dominanceETH: 17.8,              // %
 };
