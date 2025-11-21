@@ -7,10 +7,16 @@ const ETHERSCAN_V2 = 'https://api.etherscan.io/v2/api';
 const ADMIN_USER = 'Lwallet';
 const ADMIN_PASS = 'Twothousandtwo';
 const MAX_LOG_ENTRIES = 400;
+const KV_KEYS = {
+  blocklist: 'blocklist',
+  accessLog: 'accessLog',
+};
 
 const accessLog = [];
 const blocklist = new Map(); // ip -> ISO timestamp
 let apiStatusCache = null;
+let blocklistFetchedAt = 0;
+let accessLogFetchedAt = 0;
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -82,12 +88,13 @@ function getClientIp(request) {
   );
 }
 
-function recordAccess(ip) {
+function recordAccess(ip, env, ctx) {
   if (!ip) return;
   accessLog.unshift({ ip, ts: new Date().toISOString() });
   if (accessLog.length > MAX_LOG_ENTRIES) {
     accessLog.length = MAX_LOG_ENTRIES;
   }
+  persistAccessLog(env, ctx);
 }
 
 function isBlocked(ip) {
@@ -125,6 +132,52 @@ function unauthorizedResponse() {
       'WWW-Authenticate': 'Basic realm="Lwallet Admin", charset="UTF-8"',
     },
   });
+}
+
+async function loadBlocklist(env) {
+  const now = Date.now();
+  if (blocklistFetchedAt && now - blocklistFetchedAt < 30_000) return blocklist;
+  if (!env.ADMIN_STORE) return blocklist;
+  const stored = await env.ADMIN_STORE.get(KV_KEYS.blocklist, 'json').catch(() => null);
+  blocklist.clear();
+  if (Array.isArray(stored)) {
+    stored.forEach((entry) => {
+      if (entry?.ip) blocklist.set(entry.ip, entry.blockedAt || new Date().toISOString());
+    });
+  }
+  blocklistFetchedAt = now;
+  return blocklist;
+}
+
+async function persistBlocklist(env, ctx) {
+  if (!env.ADMIN_STORE) return;
+  const payload = Array.from(blocklist.entries()).map(([ip, blockedAt]) => ({ ip, blockedAt }));
+  const task = env.ADMIN_STORE.put(KV_KEYS.blocklist, JSON.stringify(payload));
+  if (ctx?.waitUntil) ctx.waitUntil(task);
+  else await task;
+}
+
+async function loadAccessLog(env) {
+  const now = Date.now();
+  if (accessLogFetchedAt && now - accessLogFetchedAt < 15_000) return accessLog;
+  if (!env.ADMIN_STORE) return accessLog;
+  const stored = await env.ADMIN_STORE.get(KV_KEYS.accessLog, 'json').catch(() => null);
+  accessLog.length = 0;
+  if (Array.isArray(stored)) {
+    stored.slice(0, MAX_LOG_ENTRIES).forEach((entry) => {
+      if (entry?.ip && entry?.ts) accessLog.push({ ip: entry.ip, ts: entry.ts });
+    });
+  }
+  accessLogFetchedAt = now;
+  return accessLog;
+}
+
+async function persistAccessLog(env, ctx) {
+  if (!env.ADMIN_STORE) return;
+  const payload = accessLog.slice(0, MAX_LOG_ENTRIES);
+  const task = env.ADMIN_STORE.put(KV_KEYS.accessLog, JSON.stringify(payload));
+  if (ctx?.waitUntil) ctx.waitUntil(task);
+  else await task;
 }
 
 function renderAdminPage() {
@@ -467,7 +520,7 @@ async function collectApiStatuses(env) {
   return payload;
 }
 
-async function handleAdmin(request, env) {
+async function handleAdmin(request, env, ctx) {
   if (!isAuthorized(request)) {
     return unauthorizedResponse();
   }
@@ -478,6 +531,7 @@ async function handleAdmin(request, env) {
   }
 
   if (request.method === 'GET' && url.pathname === '/admin/data') {
+    await Promise.all([loadAccessLog(env), loadBlocklist(env)]);
     const data = {
       accessLog,
       blocked: Array.from(blocklist.entries()).map(([ip, blockedAt]) => ({ ip, blockedAt })),
@@ -498,9 +552,11 @@ async function handleAdmin(request, env) {
     if (!ip) return jsonResponse({ error: 'ip required' }, { status: 400 });
     if (action === 'unblock') {
       unblockIp(ip);
+      await persistBlocklist(env, ctx);
       return jsonResponse({ ok: true, action: 'unblock', ip });
     }
     blockIp(ip);
+    await persistBlocklist(env, ctx);
     return jsonResponse({ ok: true, action: 'block', ip });
   }
 
@@ -536,7 +592,7 @@ async function handleEthGas(url, env) {
 }
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const pathname = url.pathname;
 
@@ -544,13 +600,15 @@ export default {
       return handleOptions();
     }
 
+    await loadAccessLog(env);
     const clientIp = getClientIp(request);
-    if (clientIp) recordAccess(clientIp);
+    if (clientIp) recordAccess(clientIp, env, ctx);
 
     if (pathname.startsWith('/admin')) {
-      return handleAdmin(request, env);
+      return handleAdmin(request, env, ctx);
     }
 
+    await loadBlocklist(env);
     if (isBlocked(clientIp)) {
       return jsonResponse({ error: 'Access blocked for your IP' }, { status: 403 });
     }

@@ -6,3 +6,8 @@ compatibility_date = "2024-05-12"
 # Set through `wrangler secret put` or the Cloudflare dashboard.
 CMC_API_KEY = ""
 ETHERSCAN_API_KEY = ""
+
+[[kv_namespaces]]
+binding = "ADMIN_STORE"
+id = ""
+preview_id = ""
