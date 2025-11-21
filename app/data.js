@@ -117,7 +117,12 @@ function pickPopular(markets) {
 
 function pickLeaders(markets, direction = 'up', limit = 3) {
   const sorted = (markets || [])
-    .filter((m) => m?.change != null && !isStableCoin(m.symbol))
+    .filter((m) => {
+      if (!m || m.change == null) return false;
+      if (isStableCoin(m.symbol)) return false;
+      if (direction === 'up' && m.change <= 0) return false;
+      return true;
+    })
     .sort((a, b) => (direction === 'up' ? b.change - a.change : a.change - b.change));
   const seen = new Set();
   const result = [];

@@ -27,29 +27,43 @@ export function page2(state) {
   const mood = (state.classification || '').toString();
   const fearAria = `Індекс страху та жадібності: ${fearDisplay}`;
 
-  const row = (m) => `
+  const row = (m = {}) => {
+    const hasInfo = Boolean(m.name || m.ticker || m.image);
+    const priceDisplay =
+      hasInfo && isFinite(m.price) ? formatPriceUSD(m.price, { ticker: m.ticker }) : '0';
+    const changeVal = isFinite(m.change) ? Number(m.change) : 0;
+    const changeText = changeVal === 0 ? '0' : `${changeVal > 0 ? '+' : ''}${changeVal.toFixed(2)}`;
+    const trend = changeVal === 0 ? '' : trendSVG(changeVal);
+
+    const avatar = m.image
+      ? `<img class="img avatar" src="${escapeHtml(m.image)}" alt="${escapeHtml(m.name || m.ticker)}" crossorigin="anonymous">`
+      : `<div class="img avatar avatar-placeholder" aria-hidden="true"></div>`;
+
+    return `
     <div class="frame-5">
       <div class="frame-6">
-        <img class="img avatar" src="${escapeHtml(m.image || '')}" alt="${escapeHtml(m.name || m.ticker)}" crossorigin="anonymous">
+        ${avatar}
         <div class="frame-7">
-          <span class="text-wrapper-2">${escapeHtml((m.name||m.ticker).toUpperCase())}</span>
-          <span class="text-wrapper-3">${escapeHtml((m.ticker||'').toUpperCase())}</span>
+          <span class="text-wrapper-2">${hasInfo ? escapeHtml((m.name||m.ticker).toUpperCase()) : ''}</span>
+          <span class="text-wrapper-3">${hasInfo ? escapeHtml((m.ticker||'').toUpperCase()) : ''}</span>
         </div>
       </div>
       <div class="frame-8">
         <div class="frame-7 price-line">
-          ${trendSVG(m.change)}
-          <span class="text-wrapper-2 value-text">${m.price ? formatPriceUSD(m.price, { ticker: m.ticker }) : '—'}</span>
+          ${trend}
+          <span class="text-wrapper-2 value-text">${priceDisplay}</span>
         </div>
         <div class="div-wrapper">
-          <span class="text-wrapper-2 value-text">${(m.change||0)>0?'+':''}${isFinite(m.change)? Number(m.change).toFixed(2):'—'}%</span>
+          <span class="text-wrapper-2 value-text">${changeText}%</span>
         </div>
       </div>
     </div>
   `;
+  };
 
   const renderLeaders = (list = []) => {
     const limited = list.slice(0, 3);
+    while (limited.length < 3) limited.push({ price: 0, change: 0 });
     return limited.map((m, i) => {
       const separator = i < limited.length - 1 ? '<div class="rectangle"></div>' : '';
       return `${row(m)}${separator}`;
