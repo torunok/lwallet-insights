@@ -30,10 +30,14 @@ export function page2(state) {
   const row = (m = {}) => {
     const hasInfo = Boolean(m.name || m.ticker || m.image);
     const priceDisplay =
-      hasInfo && isFinite(m.price) ? formatPriceUSD(m.price, { ticker: m.ticker }) : '0';
+      hasInfo && isFinite(m.price)
+        ? formatPriceUSD(m.price, { ticker: m.ticker })
+        : '$0';
     const changeVal = isFinite(m.change) ? Number(m.change) : 0;
     const changeText = changeVal === 0 ? '0' : `${changeVal > 0 ? '+' : ''}${changeVal.toFixed(2)}`;
-    const trend = changeVal === 0 ? '' : trendSVG(changeVal);
+    const trend = hasInfo
+      ? changeVal === 0 ? '' : trendSVG(changeVal)
+      : trendSVG(-1);
 
     const avatar = m.image
       ? `<img class="img avatar" src="${escapeHtml(m.image)}" alt="${escapeHtml(m.name || m.ticker)}" crossorigin="anonymous">`

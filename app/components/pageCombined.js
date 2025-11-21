@@ -70,9 +70,11 @@ function renderListItem(m = {}) {
     : `<div class="avatar avatar-placeholder" aria-hidden="true"></div>`;
   const price = hasInfo && isFinite(m.price)
     ? formatPriceUSD(m.price, { ticker: m.ticker, fixedDecimals: m.fixedDecimals })
-    : '0';
+    : '$0';
   const changeVal = isFinite(m.change) ? Number(m.change) : 0;
-  const trend = changeVal === 0 ? '' : trendSVG(changeVal);
+  const trend = hasInfo
+    ? changeVal === 0 ? '' : trendSVG(changeVal)
+    : trendSVG(-1);
   const ticker = hasInfo ? escapeHtml((m.ticker || '').toUpperCase()) : '';
   const name = hasInfo ? escapeHtml(m.name || '') : '';
 
