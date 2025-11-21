@@ -137,9 +137,10 @@ async function loadData({ origin = 'auto' } = {}) {
       ...data,
       btc: { ...state.btc, ...(data.btc || {}) },
       eth: { ...state.eth, ...(data.eth || {}) },
-      popular: (data.popular?.length ? data.popular : state.popular) || [],
-      leadersUp: (data.leadersUp?.length ? data.leadersUp : state.leadersUp) || [],
-      leadersDown: (data.leadersDown?.length ? data.leadersDown : state.leadersDown) || [],
+      // Приймаємо навіть порожні масиви, щоб не повертати старі дані, коли немає зростаючих/спадаючих
+      popular: Array.isArray(data.popular) ? data.popular : state.popular || [],
+      leadersUp: Array.isArray(data.leadersUp) ? data.leadersUp : state.leadersUp || [],
+      leadersDown: Array.isArray(data.leadersDown) ? data.leadersDown : state.leadersDown || [],
     };
 
     Object.assign(state, nextState, {
