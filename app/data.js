@@ -46,6 +46,31 @@ function classificationFromValue(value) {
   return bucket ? normalizeClassification(bucket.label) : 'Unknown';
 }
 
+const STABLE_COINS = new Set([
+  'usdt',
+  'usdc',
+  'busd',
+  'tusd',
+  'dai',
+  'usdd',
+  'usdp',
+  'gusd',
+  'susd',
+  'lusd',
+  'fdusd',
+  'usde',
+  'usdr',
+  'usdl',
+  'usdx',
+  'usdk',
+  'usd',
+]);
+
+function isStableCoin(symbol) {
+  const sym = (symbol || '').toLowerCase();
+  return !sym ? false : STABLE_COINS.has(sym) || sym.includes('usd');
+}
+
 function toMarketEntry(listing) {
   if (!listing) return null;
   const quote = listing.quote?.USD || {};
@@ -91,8 +116,8 @@ function pickPopular(markets) {
 }
 
 function pickLeaders(markets, direction = 'up', limit = 3) {
-  const sorted = markets
-    .filter((m) => m?.change != null)
+  const sorted = (markets || [])
+    .filter((m) => m?.change != null && !isStableCoin(m.symbol))
     .sort((a, b) => (direction === 'up' ? b.change - a.change : a.change - b.change));
   const seen = new Set();
   const result = [];
