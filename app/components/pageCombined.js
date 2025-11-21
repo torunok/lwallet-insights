@@ -15,7 +15,7 @@ function compactUSD(x) {
   return formatPriceUSD(x);
 }
 function pct(change) {
-  if (!isFinite(change)) return '—';
+  if (!isFinite(change)) return '0%';
   const sign = change > 0 ? '+' : '';
   return `${sign}${Number(change).toFixed(2)}%`;
 }
@@ -63,19 +63,31 @@ if (typeof window !== 'undefined') {
   };
 }
 
-function renderListItem(m) {
+function renderListItem(m = {}) {
+  const hasInfo = Boolean(m.name || m.ticker || m.image);
+  const avatar = hasInfo
+    ? `<div class="avatar"><img src="${escapeHtml(m.image || '')}" alt="${escapeHtml(m.ticker || '')}" crossorigin="anonymous"></div>`
+    : `<div class="avatar avatar-placeholder" aria-hidden="true"></div>`;
+  const price = hasInfo && isFinite(m.price)
+    ? formatPriceUSD(m.price, { ticker: m.ticker, fixedDecimals: m.fixedDecimals })
+    : '0';
+  const changeVal = isFinite(m.change) ? Number(m.change) : 0;
+  const trend = changeVal === 0 ? '' : trendSVG(changeVal);
+  const ticker = hasInfo ? escapeHtml((m.ticker || '').toUpperCase()) : '';
+  const name = hasInfo ? escapeHtml(m.name || '') : '';
+
   return `
   <li class="tg-list-item">
     <div class="tg-left">
-      <div class="avatar"><img src="${escapeHtml(m.image || '')}" alt="${escapeHtml(m.ticker || '')}" crossorigin="anonymous"></div>
+      ${avatar}
       <div class="tg-names">
-        <span class="tg-list-ticker">${escapeHtml((m.ticker || '').toUpperCase())}</span>
-        <span class="tg-list-subtitle">${escapeHtml(m.name || '')}</span>
+        <span class="tg-list-ticker">${ticker}</span>
+        <span class="tg-list-subtitle">${name}</span>
       </div>
     </div>
     <div class="tg-right">
-      <span class="tg-trend">${trendSVG(m.change)} ${formatPriceUSD(m.price, { ticker: m.ticker, fixedDecimals: m.fixedDecimals })}</span>
-      <span class="tg-change ${changeClass(m.change)}">${pct(m.change)}</span>
+      <span class="tg-trend">${trend} ${price}</span>
+      <span class="tg-change ${changeClass(changeVal)}">${pct(changeVal)}</span>
     </div>
   </li>`;
 }
@@ -89,8 +101,9 @@ function renderPopular(list = []) {
 
 function renderLeaders(list = []) {
   const items = list.slice(0, 3);
-  if (!items.length)
-    return `<li class="tg-list-item tg-list-item--empty">Немає даних</li>`;
+  while (items.length < 3) {
+    items.push({ price: 0, change: 0 });
+  }
   return items.map(renderListItem).join('');
 }
 
