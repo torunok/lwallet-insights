@@ -94,8 +94,9 @@ function renderListItem(m = {}) {
 
 function renderPopular(list = []) {
   const items = list.slice(0, 4);
-  if (!items.length)
-    return `<li class="tg-list-item tg-list-item--empty">Немає популярних активів</li>`;
+  while (items.length < 4) {
+    items.push({ price: 0, change: 0 });
+  }
   return items.map((item) => renderListItem({ ...item, fixedDecimals: 2 })).join('');
 }
 

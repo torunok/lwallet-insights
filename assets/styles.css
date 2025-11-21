@@ -777,6 +777,10 @@ body.capturing .appbar {
     border-radius: 50%;
     object-fit: cover;
 }
+.avatar.avatar-placeholder,
+.img.avatar.avatar-placeholder {
+    background: #2d3039;
+}
 
 .value-text {
     font-family: "Exo 2-Bold", Helvetica;
