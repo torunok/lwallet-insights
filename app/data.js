@@ -24,6 +24,9 @@ const CLASSIFICATION_MAP = {
   'extreme greed': 'Надзвичайна жадібність',
 };
 
+const MIN_ETH_GAS_PRICE_GWEI = 0.5; // менш як 1 Gwei на L1 — швидше за все помилка
+const MIN_ETH_TX_FEE_USD = 0.05;    // не показуємо комісію $0.00
+
 function asNum(value) {
   const num = Number(value);
   return Number.isFinite(num) ? num : null;
@@ -300,14 +303,24 @@ export async function loadAll() {
   const btcFeeLabel = formatBtcFeeLabel(btcNet?.satVb) || fallbackBtcNetwork.feeLabel;
   const btcConfLabel = btcNet?.confLabel || fallbackBtcNetwork.confLabel;
 
-  const effectiveEthFeeUsd =
-    ethNet?.feeUsd != null
-      ? asNum(ethNet.feeUsd)
-      : (asNum(ethNet?.gwei) != null && asNum(eth?.price) != null)
-        ? (asNum(ethNet.gwei) * 21000 * asNum(eth?.price)) / 1e9
-        : null;
+  const ethGasPriceGwei = asNum(ethNet?.gwei);
+  const safeGasPriceGwei =
+    ethGasPriceGwei != null && ethGasPriceGwei >= MIN_ETH_GAS_PRICE_GWEI
+      ? ethGasPriceGwei
+      : null;
 
-  const ethGasPriceLabel = formatEthGasLabel(ethNet?.gwei) || fallbackEthNetwork.gasPriceLabel;
+  let effectiveEthFeeUsd =
+    ethNet?.feeUsd != null ? asNum(ethNet.feeUsd) : null;
+
+  if (effectiveEthFeeUsd == null && safeGasPriceGwei != null && asNum(eth?.price) != null) {
+    effectiveEthFeeUsd = (safeGasPriceGwei * 21000 * asNum(eth?.price)) / 1e9;
+  }
+
+  if (effectiveEthFeeUsd != null && effectiveEthFeeUsd < MIN_ETH_TX_FEE_USD) {
+    effectiveEthFeeUsd = null;
+  }
+
+  const ethGasPriceLabel = formatEthGasLabel(safeGasPriceGwei) || fallbackEthNetwork.gasPriceLabel;
   const ethFeeLabel =
     formatEthTxFeeLabel(effectiveEthFeeUsd) || fallbackEthNetwork.feeLabel;
 

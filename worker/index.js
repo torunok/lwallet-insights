@@ -576,19 +576,80 @@ async function handleMempool(pathname) {
 }
 
 async function handleEthGas(url, env) {
-  if (!env.ETHERSCAN_API_KEY) {
-    return jsonResponse({ error: 'ETHERSCAN_API_KEY missing' }, { status: 500 });
+  async function fetchEtherscanGas() {
+    if (!env.ETHERSCAN_API_KEY) return null;
+    const upstream = new URL(ETHERSCAN_V2);
+    upstream.searchParams.set('chainid', url.searchParams.get('chainid') || '1');
+    upstream.searchParams.set('module', 'gastracker');
+    upstream.searchParams.set('action', 'gasoracle');
+    upstream.searchParams.set('apikey', env.ETHERSCAN_API_KEY);
+    const res = await fetch(upstream.toString(), {
+      method: 'GET',
+      headers: { accept: 'application/json' },
+    }).catch(() => null);
+    if (!res || !res.ok) return null;
+    const payload = await res.json().catch(() => null);
+    if (!payload) return null;
+    return { payload, source: 'etherscan' };
   }
-  const upstream = new URL(ETHERSCAN_V2);
-  upstream.searchParams.set('chainid', url.searchParams.get('chainid') || '1');
-  upstream.searchParams.set('module', 'gastracker');
-  upstream.searchParams.set('action', 'gasoracle');
-  upstream.searchParams.set('apikey', env.ETHERSCAN_API_KEY);
-  const res = await fetchUpstream(upstream.toString(), {
-    method: 'GET',
-    headers: { accept: 'application/json' },
-  });
-  return withCors(res);
+
+  async function fetchEtherchainGas() {
+    const res = await fetch('https://www.etherchain.org/api/gasPriceOracle', {
+      method: 'GET',
+      headers: { accept: 'application/json' },
+    }).catch(() => null);
+    if (!res || !res.ok) return null;
+    const payload = await res.json().catch(() => null);
+    if (!payload) return null;
+    return { payload, source: 'etherchain' };
+  }
+
+  const asNumber = (value) => {
+    const num = Number(value);
+    return Number.isFinite(num) ? num : null;
+  };
+
+  const etherscan = await fetchEtherscanGas();
+  const proposeGas =
+    asNumber(etherscan?.payload?.result?.ProposeGasPrice)
+    ?? asNumber(etherscan?.payload?.result?.proposeGasPrice);
+
+  const fastGas =
+    asNumber(etherscan?.payload?.result?.FastGasPrice)
+    ?? asNumber(etherscan?.payload?.result?.fastGasPrice);
+
+  const baseFee = asNumber(etherscan?.payload?.result?.suggestBaseFee);
+
+  const validEtherscan = proposeGas != null && proposeGas >= 0.5;
+
+  if (validEtherscan) {
+    return jsonResponse({
+      source: etherscan?.source || 'etherscan',
+      result: {
+        ProposeGasPrice: proposeGas,
+        FastGasPrice: fastGas,
+        suggestBaseFee: baseFee,
+      },
+    });
+  }
+
+  const etherchain = await fetchEtherchainGas();
+  const proposeFromEtherchain = asNumber(etherchain?.payload?.standard);
+  const fastFromEtherchain = asNumber(etherchain?.payload?.fast);
+  const baseFromEtherchain = asNumber(etherchain?.payload?.currentBaseFee);
+
+  if (proposeFromEtherchain != null) {
+    return jsonResponse({
+      source: etherchain?.source || 'etherchain',
+      result: {
+        ProposeGasPrice: proposeFromEtherchain,
+        FastGasPrice: fastFromEtherchain,
+        suggestBaseFee: baseFromEtherchain,
+      },
+    });
+  }
+
+  return jsonResponse({ error: 'Unable to fetch gas price' }, { status: 502 });
 }
 
 export default {
