@@ -13,6 +13,7 @@
     --canvas-width: 1080px;
     --canvas-height: 1920px;
     --app-max-width: 1600px;
+    --scale-factor: 1;
 }
 
 * {
@@ -30,6 +31,139 @@ body {
     color: var(--text);
     font-family: var(--font);
     font-size: clamp(14px, 1.05vw, 16px);
+}
+
+/* Адаптація для великих моніторів (1920px+) */
+@media (min-width: 1920px) and (min-height: 1080px) {
+    :root {
+        --app-max-width: 1800px;
+    }
+
+    .main-container {
+        padding: 18px;
+    }
+}
+
+/* Адаптація для моніторів 2K (2560px+) */
+@media (min-width: 2560px) and (min-height: 1440px) {
+    :root {
+        --app-max-width: 2400px;
+        --scale-factor: 1.2;
+        --gap: 18px;
+    }
+
+    body {
+        font-size: clamp(15px, 1.1vw, 18px);
+    }
+
+    .appbar {
+        padding: 14px 20px;
+        gap: 18px;
+    }
+
+    .brand {
+        font-size: 1.15em;
+        letter-spacing: .4px;
+    }
+
+    .nav-link {
+        padding: 8px 14px;
+        font-size: 1.05em;
+        border-radius: 12px;
+    }
+
+    .nav-refresh-btn {
+        padding: 4px 12px;
+        font-size: 11px;
+    }
+
+    .main-container {
+        padding: 20px;
+        height: calc(100vh - 88px);
+        min-height: 0;
+    }
+
+    .btn,
+    .save-btn {
+        padding: 10px 16px;
+        font-size: 1.05em;
+    }
+
+    #canvas-wrapper {
+        transform-origin: center center;
+    }
+}
+
+/* Адаптація для моніторів 4K (3840px+) */
+@media (min-width: 3840px) and (min-height: 2160px) {
+    :root {
+        --app-max-width: 3600px;
+        --scale-factor: 1.4;
+        --gap: 22px;
+        --radius: 20px;
+    }
+
+    body {
+        font-size: clamp(17px, 1.2vw, 22px);
+    }
+
+    .appbar {
+        padding: 18px 28px;
+        gap: 22px;
+        border-bottom-width: 2px;
+    }
+
+    .brand {
+        font-size: 1.3em;
+        letter-spacing: .5px;
+    }
+
+    .nav-link {
+        padding: 10px 18px;
+        font-size: 1.15em;
+        border-radius: 14px;
+    }
+
+    .nav-refresh-btn {
+        padding: 5px 14px;
+        font-size: 12px;
+    }
+
+    .nav-refresh-btn__spinner {
+        width: 16px;
+        height: 16px;
+    }
+
+    .main-container {
+        padding: 28px;
+        height: calc(100vh - 96px);
+        min-height: 0;
+    }
+
+    .btn,
+    .save-btn {
+        padding: 12px 20px;
+        font-size: 1.15em;
+        border-radius: 14px;
+    }
+
+    #canvas-wrapper {
+        transform-origin: center center;
+    }
+
+    /* Збільшені розміри для елементів всередині канвасу */
+    .page-header {
+        padding: 32px;
+    }
+
+    .page-title {
+        font-size: 36px;
+    }
+
+    .card {
+        border-radius: 22px;
+        border-width: 1.5px;
+    }
 }
 
 /* AppBar */
@@ -193,6 +327,7 @@ body {
     display: grid;
     place-items: center;
     padding: 16px;
+    min-height: 0;
 }
 
 #canvas-wrapper {

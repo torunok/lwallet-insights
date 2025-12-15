@@ -12,11 +12,31 @@ export function applyScale() {
   const wrapper = document.getElementById('canvas-wrapper');
   if (!wrapper) return;
 
-  const vh = window.innerHeight - 80;
-  const vw = window.innerWidth - 32;
+  // Визначаємо висоту appbar для правильного розрахунку
+  const appbarHeight = 80;
+  const padding = 32;
+  
+  // Для великих екранів збільшуємо відступи
+  let adjustedPadding = padding;
+  let adjustedAppbarHeight = appbarHeight;
+  
+  if (window.innerWidth >= 3840 && window.innerHeight >= 2160) {
+    // 4K
+    adjustedPadding = 56;
+    adjustedAppbarHeight = 96;
+  } else if (window.innerWidth >= 2560 && window.innerHeight >= 1440) {
+    // 2K
+    adjustedPadding = 40;
+    adjustedAppbarHeight = 88;
+  }
+
+  const vh = window.innerHeight - adjustedAppbarHeight;
+  const vw = window.innerWidth - adjustedPadding;
   const scale = Math.min(vw / TARGET_W, vh / TARGET_H);
 
-  wrapper.style.transformOrigin = 'top left';
+  // Для великих екранів використовуємо центрування
+  const isLargeScreen = window.innerWidth >= 2560 && window.innerHeight >= 1440;
+  wrapper.style.transformOrigin = isLargeScreen ? 'center center' : 'top left';
   wrapper.style.transform = `scale(${scale})`;
   wrapper.style.width = `${TARGET_W}px`;
   wrapper.style.height = `${TARGET_H}px`;
