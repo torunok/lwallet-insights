@@ -41,6 +41,41 @@ export async function exportImage(opts = {}) {
   wrapper.style.height = `${H}px`;
 
   try {
+    const adjustPage1LayoutForDoc = (doc) => {
+      if (route !== 'page-1') return;
+      const docArea = doc.getElementById('screen-shot-area');
+      if (!docArea) return;
+      const story = docArea.querySelector('.instagram-story');
+      if (!story) return;
+      const group = story.querySelector('.group');
+      const btc = story.querySelector('.frame');
+      const eth = story.querySelector('.frame-3');
+      const popular = story.querySelector('.frame-10');
+      if (!group || !btc || !eth || !popular) return;
+
+      const groupRect = group.getBoundingClientRect();
+      const maxBottom = Math.max(btc.getBoundingClientRect().bottom, eth.getBoundingClientRect().bottom);
+      const currentTop = popular.getBoundingClientRect().top - groupRect.top;
+      const desiredGap = 24;
+      const desiredTop = Math.ceil(maxBottom - groupRect.top + desiredGap);
+      if (desiredTop > currentTop) {
+        popular.style.setProperty('top', `${desiredTop}px`);
+      }
+
+      const market = story.querySelector('.frame-4');
+      if (market) {
+        const popularBottom = popular.getBoundingClientRect().bottom - groupRect.top;
+        const marketTop = market.getBoundingClientRect().top - groupRect.top;
+        const marketGap = 24;
+        const desiredMarketTop = Math.ceil(popularBottom + marketGap);
+        if (desiredMarketTop > marketTop) {
+          market.style.setProperty('top', `${desiredMarketTop}px`);
+        }
+      }
+    };
+
+    await new Promise(requestAnimationFrame);
+
     const useTransparent = format === 'png' ? !!transparent : false;
     const bg = useTransparent ? null : getComputedStyle(area).backgroundColor || '#0f1116';
 
@@ -50,6 +85,9 @@ export async function exportImage(opts = {}) {
       scale: Number(scale) || 2,
       scrollX: 0, scrollY: 0,
       windowWidth: W, windowHeight: H,
+      onclone: (doc) => {
+        adjustPage1LayoutForDoc(doc);
+      },
     });
 
     const mime = format === 'jpeg' ? 'image/jpeg' : 'image/png';
