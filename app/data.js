@@ -24,8 +24,8 @@ const CLASSIFICATION_MAP = {
   'extreme greed': 'Надзвичайна жадібність',
 };
 
-const MIN_ETH_GAS_PRICE_GWEI = 0.5; // менш як 1 Gwei на L1 — швидше за все помилка
-const MIN_ETH_TX_FEE_USD = 0.05;    // не показуємо комісію $0.00
+const MIN_ETH_GAS_PRICE_GWEI = 0.001; // допускаємо дробові значення (наприклад 0.067 gwei)
+const MIN_ETH_TX_FEE_USD = 0;         // дозволяємо показувати дуже малі комісії (< $0.01)
 
 function asNum(value) {
   const num = Number(value);
@@ -237,8 +237,8 @@ function estimateEthNetworkMetrics(entry) {
   const load = relativeLoad(entry);
   const gasPriceGwei = 14 + load * 260; // 14..131 Gwei
   const feeUsd = price != null ? gasPriceGwei * 1e-9 * 21000 * price : null;
-  const gasPriceLabel = `${gasPriceGwei.toFixed(1)} Gwei`;
-  const feeLabel = feeUsd != null ? `${feeUsd.toFixed(2)} $ за TX` : '—';
+  const gasPriceLabel = formatEthGasLabel(gasPriceGwei) || '—';
+  const feeLabel = formatEthTxFeeLabel(feeUsd) || '—';
   return { gasPriceLabel, feeLabel };
 }
 
@@ -250,14 +250,20 @@ function formatBtcFeeLabel(value) {
 
 function formatEthGasLabel(value) {
   const num = asNum(value);
-  if (num == null) return null;
-  const precise = Number.isInteger(num) ? num : Number(num.toFixed(1));
-  return `${precise} Gwei`;
+  if (num == null || num <= 0) return null;
+  const abs = Math.abs(num);
+  let decimals = 1;
+  if (abs < 0.1) decimals = 3;
+  else if (abs < 1) decimals = 2;
+  else if (abs < 10) decimals = 2;
+  const formatted = num.toFixed(decimals);
+  return `${formatted} gwei`;
 }
 
 function formatEthTxFeeLabel(value) {
   const num = asNum(value);
-  if (num == null) return null;
+  if (num == null || num <= 0) return null;
+  if (num < 0.01) return '< $0.01 за TX';
   return `$${num.toFixed(2)} за TX`;
 }
 
@@ -316,7 +322,7 @@ export async function loadAll() {
     effectiveEthFeeUsd = (safeGasPriceGwei * 21000 * asNum(eth?.price)) / 1e9;
   }
 
-  if (effectiveEthFeeUsd != null && effectiveEthFeeUsd < MIN_ETH_TX_FEE_USD) {
+  if (effectiveEthFeeUsd != null && effectiveEthFeeUsd <= MIN_ETH_TX_FEE_USD) {
     effectiveEthFeeUsd = null;
   }
 

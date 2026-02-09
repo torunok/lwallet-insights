@@ -8,7 +8,7 @@ import { loadAll } from './data.js';
 import { ROUTES, PAGE_SPECS } from './config.js';
 import { preloadImages } from './images.js';
 
-const STATE_CACHE_KEY = 'lw-insights-cache-v1';
+const STATE_CACHE_KEY = 'lw-insights-cache-v2';
 
 function readCachedState() {
   if (typeof localStorage === 'undefined') return null;
@@ -34,6 +34,16 @@ function persistStateSnapshot(snapshot) {
 function hydrateStateFromCache() {
   const cached = readCachedState();
   if (!cached) return false;
+  if (cached?.eth) {
+    const gas = String(cached.eth.gasPrice || '').toLowerCase().trim();
+    const fee = String(cached.eth.transactionFee || '').toLowerCase().trim();
+    if (gas === '0 gwei' || gas === '0.0 gwei' || gas === '0') {
+      cached.eth.gasPrice = null;
+    }
+    if (fee === '$0.00 за tx' || fee === '$0.00' || fee === '0') {
+      cached.eth.transactionFee = null;
+    }
+  }
   Object.assign(state, cached, { ready: true });
   return true;
 }
